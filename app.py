@@ -5,6 +5,7 @@ from flask_migrate import Migrate
 from flask_bootstrap import Bootstrap5
 from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import func
+import json
 import os
 import random
 import datetime
@@ -17,6 +18,9 @@ from admin.routes import setup_admin_upload_folder
 from forms import RegistrationForm, LoginForm, QuestionForm, EditProfileForm
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'json_serializer': lambda obj: json.dumps(obj, ensure_ascii=False)
+}
 
 # --- Configuration ---
 instance_folder_path = os.path.join(
