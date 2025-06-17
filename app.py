@@ -5,6 +5,7 @@ from flask_migrate import Migrate
 from flask_bootstrap import Bootstrap5
 from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import func
+from whitenoise import WhiteNoise
 import json
 import os
 import random
@@ -21,7 +22,7 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'json_serializer': lambda obj: json.dumps(obj, ensure_ascii=False)
 }
-
+app.wsgi_app = WhiteNoise(app.wsgi_app, root='static/')
 # --- Configuration ---
 instance_folder_path = os.path.join(
     os.path.abspath(os.path.dirname(__file__)), 'instance'
@@ -410,8 +411,8 @@ def start_exam():
 @login_required
 def show_question(question_id):
     question = Question.query.get_or_404(question_id)
-    options_list = question.options
-    correct_answers_list = question.correct_answer
+    options_list = json.loads(question.options) if isinstance(question.options, str) else question.options
+    correct_answers_list = json.loads(question.correct_answer) if isinstance(question.correct_answer, str) else question.correct_answer
     is_multi_select_question = isinstance(correct_answers_list, list) and len(correct_answers_list) > 1
     
     # ... (以下のロジックは変更なし)
@@ -472,7 +473,7 @@ def handle_answer():
         return redirect(request.referrer or url_for('quiz_range_select'))
 
     question = Question.query.get_or_404(question_id)
-    correct_answers_list = question.correct_answer
+    correct_answers_list = json.loads(question.correct_answer) if isinstance(question.correct_answer, str) else question.correct_answer
 
     is_correct = (set(user_selected_options) == set(correct_answers_list))
     
