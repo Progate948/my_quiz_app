@@ -470,7 +470,24 @@ def show_question(question_id):
 @app.route('/answer', methods=['POST'])
 @login_required
 def handle_answer():
-    # ... (前略) ...
+    if session.get(EXAM_MODE_KEY):
+        end_time_str = session.get('exam_end_time')
+        if end_time_str:
+            end_time = datetime.datetime.fromisoformat(end_time_str)
+            if datetime.datetime.now(pytz.utc) > end_time:
+                flash("時間切れです！試験を終了します。", "warning")
+                return redirect(url_for('submit_exam'))
+
+    user_selected_options = request.form.getlist('selected_option')
+    
+    # --- ▼▼▼ この1行を追加してください ▼▼▼ ---
+    question_id = request.form.get('question_id', type=int)
+    # --- ▲▲▲ この1行を追加してください ▲▲▲ ---
+
+    if not user_selected_options or question_id is None:
+        flash("解答が選択されていないか、問題IDが不明です。", "warning")
+        return redirect(request.referrer or url_for('quiz_range_select'))
+
     question = Question.query.get_or_404(question_id)
     correct_answers_list = question.correct_answer
 
