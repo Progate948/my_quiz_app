@@ -1,0 +1,330 @@
+/* style.css */
+
+/* --- カラーパレットの定義 --- */
+:root {
+    --theme-primary: #345a7c;        /* メインの青色 */
+    --theme-primary-dark: #2a4a66;   /* ホバー時の濃い青 */
+    --theme-text: #333333;         /* 基本のテキスト色 */
+    --theme-background: #f0f2f5; /* サイト全体の背景色 */
+    --theme-surface: #ffffff;       /* カードなどの表面色 */
+    --theme-border: #e0e0e0;      /* 枠線の色 */
+}
+
+/* --- 全体の基本スタイル --- */
+html, body {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Noto Sans JP', sans-serif;
+    background-color: var(--theme-background);
+    color: var(--theme-text);
+    line-height: 1.7;
+}
+
+.main-content-wrapper {
+    flex: 1;
+    padding: 20px 15px;
+}
+
+.container {
+    background-color: var(--theme-surface);
+    border: 1px solid var(--theme-border);
+    padding: 30px;
+    border-radius: 8px;
+    max-width: 720px;
+    margin: 30px auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* --- ヘッダー --- */
+.main-header {
+    background-color: var(--theme-surface);
+    border-bottom: 1px solid var(--theme-border);
+    padding: 0 25px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+.header-content {
+    display: flex;
+    justify-content: center; 
+    align-items: center;
+    height: 65px;
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative; 
+}
+.header-logo {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--theme-text);
+    text-decoration: none;
+    letter-spacing: 0.5px;
+}
+.header-nav {
+    display: flex;
+    align-items: center;
+    position: absolute;
+    right: 25px;
+}
+.header-user-menu {
+    position: relative;
+}
+.menu-toggle {
+    background-color: transparent;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+    transition: background-color 0.2s;
+}
+.menu-toggle:hover {
+    background-color: var(--theme-background);
+}
+.menu-toggle .fa-user-circle { font-size: 1.3rem; }
+.menu-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background-color: var(--theme-surface);
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    width: 240px;
+    overflow: hidden;
+    z-index: 1001;
+}
+.menu-dropdown.show { display: block; }
+.menu-dropdown a, .menu-dropdown .menu-item-button {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 20px;
+    color: var(--theme-text);
+    text-decoration: none;
+    font-size: 1rem;
+}
+.menu-dropdown a:hover, .menu-dropdown .menu-item-button:hover {
+    background-color: #f0f8ff;
+}
+.menu-dropdown a i, .menu-dropdown .menu-item-button i {
+    width: 20px;
+    text-align: center;
+    color: #6c757d;
+}
+.menu-dropdown hr {
+    border: 0;
+    border-top: 1px solid var(--theme-border);
+    margin: 5px 0;
+}
+.menu-dropdown .menu-item-form { margin: 0; padding: 0; display: block; }
+.menu-dropdown .menu-item-button {
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    font-family: inherit;
+}
+.menu-item-button.menu-item-danger i, .menu-item-button.menu-item-danger span {
+    color: #dc3545;
+    font-weight: bold;
+}
+.menu-item-button.menu-item-danger:hover { background-color: #f8d7da; }
+.btn-header-login, .btn-header-register {
+    padding: 8px 20px;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+    transition: background-color 0.2s, color 0.2s;
+}
+.btn-header-login {
+    background-color: var(--theme-primary);
+    color: #fff;
+    margin-right: 10px;
+}
+.btn-header-login:hover {
+    background-color: var(--theme-primary-dark);
+}
+.btn-header-register {
+    background-color: #f8f9fa;
+    color: #333;
+    border: 1px solid #dee2e6;
+}
+.btn-header-register:hover {
+    background-color: #e9ecef;
+}
+
+/* --- 問題範囲選択ページのスタイル --- */
+.range-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 30px 0;
+}
+.range-checkbox-label {
+    display: block;
+    padding: 20px;
+    background-color: var(--theme-surface);
+    border: 1px solid var(--theme-border);
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+}
+.range-checkbox-label:hover {
+    border-color: var(--theme-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.range-checkbox-label.selected {
+    background-color: #eaf3fb;
+    border-color: var(--theme-primary);
+}
+.range-checkbox-label.selected .range-checkbox-text {
+    color: var(--theme-primary);
+}
+.range-checkbox { display: none; }
+.range-checkbox-text {
+    font-size: 1.1em;
+    font-weight: 700;
+    color: var(--theme-text);
+}
+.range-controls {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+/* --- チェックした問題一覧ページのスタイル --- */
+.check-overview-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.check-overview-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid var(--theme-border);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    text-decoration: none;
+    color: var(--theme-text);
+    transition: background-color 0.2s;
+}
+.check-overview-item:hover {
+    background-color: #f8f9fa;
+    text-decoration: none;
+}
+.check-overview-icon {
+    width: 35px;
+    height: 35px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.3em;
+    font-weight: bold;
+    color: white;
+    margin-right: 15px;
+}
+.check-overview-item.type1 .check-overview-icon { background-color: #28a745; }
+.check-overview-item.type2 .check-overview-icon { background-color: #ffc107; color: #333; }
+.check-overview-item.type3 .check-overview-icon { background-color: #e83e8c; }
+.check-overview-count {
+    margin-left: auto;
+    font-size: 1.2em;
+    font-weight: 700;
+    color: var(--theme-primary);
+}
+
+/* --- 復習・チェック問題詳細一覧ページのスタイル --- */
+.page-title-with-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 25px;
+    color: var(--theme-text);
+}
+.check-title-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.6em;
+    font-weight: bold;
+    color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.check-title-icon.type1 { background-color: #28a745; }
+.check-title-icon.type2 { background-color: #ffc107; color: #333; }
+.check-title-icon.type3 { background-color: #e83e8c; }
+
+.incorrect-question-item, .checked-question-item {
+    background-color: var(--theme-surface);
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    border: 1px solid var(--theme-border);
+    border-left-width: 5px; 
+}
+.incorrect-question-item h2, .checked-question-item h2 {
+    font-size: 1.3em;
+    text-align: left;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+.incorrect-question-item {
+    border-left-color: #dc3545;
+    background-color: #fff5f5;
+}
+.checked-question-item.type1 { border-left-color: #28a745; background-color: #f0fff0; }
+.checked-question-item.type2 { border-left-color: #ffc107; background-color: #fff9e6; }
+.checked-question-item.type3 { border-left-color: #e83e8c; background-color: #fff0f6; }
+
+
+/* --- ボタン、テキスト、結果表示などの共通スタイル --- */
+h1, h2 { color: var(--theme-text); text-align: center; margin-bottom: 25px; font-weight: 700; }
+.question-text { font-size: 1.25em; line-height: 1.7; margin-bottom: 30px; font-weight: 700; }
+.btn { font-weight: 700; border-radius: 6px; transition: all 0.2s ease-in-out; }
+.btn-primary { background-color: var(--theme-primary); border-color: var(--theme-primary); }
+.btn-primary:hover { background-color: var(--theme-primary-dark); border-color: var(--theme-primary-dark); transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+form button[type="submit"] { display: block; width: 100%; margin-top: 20px; padding: 12px 20px; font-size: 1.1em; }
+.options label { display: block; margin-bottom: 15px; padding: 15px 20px; border: 1px solid var(--theme-border); border-radius: 6px; background-color: #f8f9fa; cursor: pointer; transition: background-color 0.2s, border-color 0.2s; }
+.options label:hover { background-color: var(--theme-surface); border-color: var(--theme-primary); }
+.options input[type="radio"]:checked + span, .options input[type="checkbox"]:checked + span { font-weight: 700; color: var(--theme-primary); }
+.options input[type="radio"], .options input[type="checkbox"] { margin-right: 12px; transform: scale(1.2); }
+.result-message { font-size: 1.6em; font-weight: 700; margin-bottom: 25px; padding: 15px; border-radius: 6px; text-align: center; }
+.result-message.correct { color: #155724; background-color: #d4edda; border: 1px solid #c3e6cb; }
+.result-message.incorrect { color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; }
+.explanation { background-color: var(--theme-background); padding: 20px; border-radius: 6px; text-align: left; margin-top: 25px; border: 1px solid var(--theme-border); }
+.explanation h2 { font-size: 1.2em; color: var(--theme-text); margin-bottom: 10px; }
+.next-action-area { text-align: center; margin-top: 30px; }
+.next-action-area .btn { padding: 10px 40px; font-size: 1.1em; }
+
+/* --- チェック機能ボタンのスタイル --- */
+.check-section { display: flex; justify-content: center; gap: 10px; margin-top: 25px; padding-top: 15px; border-top: 1px solid var(--theme-border); }
+.check-toggle-btn { border-radius: 50%; width: 40px; height: 40px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 1.2em; transition: background-color 0.2s, border-color 0.2s; }
+.btn-unchecked { background-color: #f0f2f5; color: #6c757d; border: 1px solid #ced4da; }
+.check-toggle-btn.btn-unchecked:hover { background-color: #e2e6ea; }
+.btn-checked-type1 { background-color: #28a745; color: white; border-color: #28a745;}
+.btn-checked-type1:hover { background-color: #218838; border-color: #1e7e34; }
+.btn-checked-type2 { background-color: #ffc107; color: #333; border-color: #ffc107;}
+.btn-checked-type2:hover { background-color: #e0a800; border-color: #d39e00; }
+.btn-checked-type3 { background-color: #e83e8c; color: white; border-color: #e83e8c;}
+.btn-checked-type3:hover { background-color: #d12678; border-color: #c21f6c; }
+
+.table .bi-trophy-fill { font-size: 1.5rem; }

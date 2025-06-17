@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}復習の開始{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>間違えた問題の振り返り</h1>
+
+    {% if reviewed_questions %}
+    <div class="bulk-review-action">
+        <a href="{{ url_for('review_all_incorrect') }}" class="btn btn-primary btn-large">
+            間違えた問題をまとめて復習
+        </a>
+    </div>
+    {% else %}
+        <p>間違えた問題はありません</p>
+    {% endif %}
+
+    {% for item in reviewed_questions %}
+    <div class="incorrect-question-item">
+        <h2>No. {{ item.question.id }}: {{ item.question.question_text }}</h2>
+        {# ★追加: 画像の表示 #}
+        {% if item.question.image_filename %}
+        <div class="question-image-container">
+            <img src="{{ url_for('static', filename='images/' + item.question.image_filename) }}" alt="問題画像" class="question-image">
+        </div>
+        {% endif %}
+        <p>あなたの解答: <strong>{{ item.user_selected_option }}</strong></p>
+        <p>正解: <strong>{{ item.correct_answer_display }}</strong></p>
+        <div class="explanation">
+            <h3>解説</h3>
+            <p>{{ item.question.explanation }}</p>
+        </div>
+        <div class="retry-button-group">
+            <a href="{{ url_for('retry_question', question_id=item.question.id) }}" class="btn btn-secondary">もう一度解く</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

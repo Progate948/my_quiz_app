@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}管理者ページ{% endblock %} - クイズアプリ</title>
+    {# Bootstrap-FlaskがCSSを自動で挿入してくれます #}
+    {{ bootstrap.load_css() }}
+    {# 既存のCSSや管理者用カスタムCSSも読み込む #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {# <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_style.css') }}"> #} {# 必要なら作成 #}
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('admin.index') }}">クイズ管理画面</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbar" aria-controls="adminNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="adminNavbar">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'admin.list_questions' %}active{% endif %}" href="{{ url_for('admin.list_questions') }}">問題一覧</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'admin.add_question' %}active{% endif %}" href="{{ url_for('admin.add_question') }}">問題追加</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('quiz_range_select') }}" target="_blank">サイト表示</a>
+                    </li>
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownUserLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            {{ current_user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownUserLink">
+                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">ログアウト</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block admin_content %}{% endblock %}
+    </main>
+
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container text-center">
+            {# ★★★ 修正箇所 ★★★ #}
+            <span class="text-muted">&copy; {{ current_year }} クイズアプリ管理者ページ</span>
+        </div>
+    </footer>
+
+    {# Bootstrap-FlaskがJSを自動で挿入 #}
+    {{ bootstrap.load_js() }}
+    {% block extra_script %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block title %}問題範囲選択{% endblock %}
+
+{% block content %}
+<div class="container">
+    {# 通常のクイズモード #}
+    <div class="mode-section mb-5">
+        <h1>問題範囲を選択</h1>
+        <p>問題範囲を自由に選んで学習できます。</p>
+        <form action="{{ url_for('start_multi_quiz') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+            <!-- ▼▼▼ ここから追加 ▼▼▼ -->
+            <div class="range-controls">
+                <button type="button" id="select-all-btn" class="btn btn-secondary btn-sm">すべて選択</button>
+                <button type="button" id="clear-all-btn" class="btn btn-secondary btn-sm">選択をクリア</button>
+            </div>
+            <!-- ▲▲▲ ここまで追加 ▲▲▲ -->
+
+            <div class="range-selection-grid">
+                {% for key, range_info in quiz_ranges.items() %}
+                    <label class="range-checkbox-label">
+                        <input type="checkbox" name="selected_ranges" value="{{ key }}" class="range-checkbox">
+                        <span class="range-checkbox-text">{{ range_info.name }}</span>
+                    </label>
+                {% endfor %}
+            </div>
+            <div class="form-submit-buttons">
+                <button type="submit" class="btn btn-primary btn-lg">クイズ開始</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const rangeCheckboxes = document.querySelectorAll('.range-checkbox');
+    const selectAllBtn = document.getElementById('select-all-btn');
+    const clearAllBtn = document.getElementById('clear-all-btn');
+
+    // --- ▼▼▼ 既存のJavaScriptに追記 ▼▼▼ ---
+
+    // 「すべて選択」ボタンの処理
+    selectAllBtn.addEventListener('click', function() {
+        rangeCheckboxes.forEach(function(checkbox) {
+            checkbox.checked = true;
+            // 見た目を更新するために、既存のイベントリスナーを再利用
+            checkbox.dispatchEvent(new Event('change'));
+        });
+    });
+
+    // 「選択をクリア」ボタンの処理
+    clearAllBtn.addEventListener('click', function() {
+        rangeCheckboxes.forEach(function(checkbox) {
+            checkbox.checked = false;
+            checkbox.dispatchEvent(new Event('change'));
+        });
+    });
+    
+    // --- ▲▲▲ ここまで追記 ▲▲▲ ---
+
+    // 各チェックボックスの見た目を更新する処理 (変更なし)
+    rangeCheckboxes.forEach(function(checkbox) {
+        // 初期状態を反映
+        if (checkbox.checked) {
+            checkbox.closest('.range-checkbox-label').classList.add('selected');
+        }
+        
+        checkbox.addEventListener('change', function() {
+            const label = this.closest('.range-checkbox-label');
+            if (this.checked) {
+                label.classList.add('selected');
+            } else {
+                label.classList.remove('selected');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

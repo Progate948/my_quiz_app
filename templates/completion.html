@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}結果発表{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% if exam_completed %}
+        <h1>試験モード完了！</h1>
+        <p class="summary">
+            お疲れ様でした！<br>
+            試験結果は {{ total_answered }} 問中 <strong>{{ correct_count }}</strong> 問正解でした。
+            {% if answered_count is not none and answered_count < total_answered %}
+                <br><small>（時間内に {{ answered_count }} 問解答）</small>
+            {% endif %}
+        </p>
+    {% else %}
+        <h1>クイズ完了！</h1>
+        <p class="summary">
+            お疲れ様でした！<br>
+            {{ total_answered }} 問中 <strong>{{ correct_count }}</strong> 問正解しました。
+        </p>
+    {% endif %}
+
+    <div class="btn-group text-center">
+        <a href="{{ url_for('quiz_range_select') }}" class="btn btn-primary">別の問題で始める</a>
+        <a href="{{ url_for('mypage') }}" class="btn">マイページで結果を見る</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}試験モード{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="mode-section text-center">
+        <h1>試験モード</h1>
+        <p class="lead my-4">全範囲からランダムに20問が出題されます。(制限時間: 20分)</p>
+        <form action="{{ url_for('start_exam') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="submit" class="btn btn-warning btn-lg">試験モードを開始</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

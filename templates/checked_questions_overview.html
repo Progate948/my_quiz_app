@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}チェックした問題一覧{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>チェックした問題一覧</h1>
+
+    {% if check_counts %}
+        <div class="check-overview-list">
+        {% for type_key, data in check_counts.items() %}
+            <a href="{{ url_for('my_checked_questions_by_type', check_type=type_key) }}" class="check-overview-item {{ type_key }}">
+                <div class="check-overview-icon">✔</div>
+                <!-- <span class="check-overview-name">{{ data.name }}</span> -->
+                <span class="check-overview-count">{{ data.count }} 問</span>
+            </a>
+        {% endfor %}
+        </div>
+    {% else %}
+        <p>チェックした問題はありません。</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "admin_base.html" %} {# ← 修正: "admin/" プレフィックスを削除 #}
+{% from "bootstrap5/form.html" import render_form_row, render_field, render_hidden_errors %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block admin_content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">{{ legend }}</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="" enctype="multipart/form-data" novalidate>
+                    {{ form.hidden_tag() }} {# CSRFトークンなど #}
+                    
+                    {{ render_field(form.question_text, rows=6, class="form-control form-control-lg") }}
+                    
+                    <div class="my-3">
+                        {{ render_field(form.options_text, class="form-control", placeholder="例: 東京, 大阪, 京都, 札幌") }}
+                        <small class="form-text text-muted">{{ form.options_text.description }}</small>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ render_field(form.correct_answers_text, class="form-control", placeholder="例: 東京, 京都 (選択肢と完全に一致)") }}
+                        <small class="form-text text-muted">{{ form.correct_answers_text.description }}</small>
+                    </div>
+                    
+                    {{ render_field(form.explanation, rows=4, class="form-control") }}
+
+                    <div class="mb-3">
+                        {{ form.image.label(class="form-label") }}
+                        {{ form.image(class="form-control") }}
+                        {% if form.image.errors %}
+                            {% for error in form.image.errors %}
+                                <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        {% endif %}
+                        {% if current_image_url %}
+                            <div class="mt-2">
+                                <p class="mb-1"><strong>現在の画像:</strong></p>
+                                <img src="{{ current_image_url }}" alt="現在の問題画像" class="img-thumbnail" style="max-width: 250px; max-height: 250px; object-fit: contain;">
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <hr>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        {% if question_id %} {# 編集モードの場合 #}
+                        <a href="{{ url_for('admin.list_questions') }}" class="btn btn-outline-secondary me-md-2">キャンセル</a>
+                        {% endif %}
+                        {{ form.submit(class="btn btn-primary btn-lg") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

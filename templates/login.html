@@ -1,0 +1,14 @@
+    {% extends "base.html" %}
+    {# {% import "bootstrap/wtf.html" as wtf %} ← この行を削除またはコメントアウト #}
+    {% from "bootstrap5/form.html" import render_form %} {# render_formをインポート #}
+    
+    {% block title %}ログイン - {{ super() }}{% endblock %}
+    
+    {% block content %}
+    <div class="container">
+        <h1>ログイン</h1>
+        {{ render_form(form) }} {# フォーム全体をレンダリング #}
+        <p>アカウントをお持ちでないですか？ <a href="{{ url_for('register') }}">登録はこちら</a></p>
+    </div>
+    {% endblock %}
+    

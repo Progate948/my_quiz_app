@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}チェックした問題{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="page-title-with-icon">
+        <!-- ▼▼▼ この行を修正 ▼▼▼ -->
+        <span class="check-title-icon {{ current_check_type }}">✔</span>
+    </h1>
+
+    {% if checked_questions %}
+    <div class="bulk-review-action">
+        <a href="{{ url_for('review_all_checked', check_type=current_check_type) }}" class="btn btn-primary btn-large">
+            このタイプの問題をまとめて復習
+        </a>
+    </div>
+    {% else %}
+        <p>このタイプのチェック問題はまだありません。</p>
+    {% endif %}
+
+    {% for item in checked_questions %}
+    <div class="checked-question-item {{ item.check_type }}">
+        <h2>No. {{ item.question.id }}: {{ item.question.question_text }}</h2>
+        {% if item.question.image_filename %}
+        <div class="question-image-container">
+            <img src="{{ url_for('static', filename='images/' + item.question.image_filename) }}" alt="問題画像" class="question-image">
+        </div>
+        {% endif %}
+        <p>正解: <strong>{{ item.correct_answer_display }}</strong></p>
+        <div class="explanation">
+            <h3>解説</h3>
+            <p>{{ item.question.explanation }}</p>
+        </div>
+        <div class="retry-button-group">
+            <a href="{{ url_for('retry_question', question_id=item.question.id) }}" class="btn btn-secondary">もう一度解く</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

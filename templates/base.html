@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    <title>{% block title %}CCNP ENCOR 対策問題{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- ▼▼▼ Noto Sans JPに加えて、Montserratを読み込みます ▼▼▼ -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    
+    {% if bootstrap %}
+        {{ bootstrap.load_css() }}
+    {% endif %}
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-content">
+            <a href="{{ url_for('quiz_range_select') }}" class="header-logo">
+                <!-- ▼▼▼ ロゴのテキストを変更します ▼▼▼ -->
+                CCNP ENCOR 対策問題
+            </a>
+            
+            <div class="header-nav">
+                {% if current_user.is_authenticated %}
+                    <div class="header-user-menu">
+                        <button type="button" id="menu-toggle-btn" class="menu-toggle">
+                            <i class="fas fa-user-circle"></i>
+                            <span>{{ current_user.username }}</span>
+                            <i class="fas fa-caret-down"></i>
+                        </button>
+                        <div id="menu-dropdown" class="menu-dropdown">
+                            <a href="{{ url_for('quiz_range_select') }}"><i class="fas fa-home"></i> 問題選択</a>
+                            <a href="{{ url_for('exam_info') }}"><i class="fas fa-stopwatch"></i> 試験モード</a>
+                            <a href="{{ url_for('mypage') }}"><i class="fas fa-chart-line"></i> マイページ</a>
+                            <a href="{{ url_for('edit_profile') }}"><i class="fas fa-user-edit"></i> プロフィール編集</a>
+                            <a href="{{ url_for('ranking') }}"><i class="fas fa-trophy"></i> ランキング</a>
+                            <a href="{{ url_for('review_incorrect') }}"><i class="fas fa-times-circle"></i> 間違えた問題</a>
+                            <a href="{{ url_for('checked_questions_overview') }}"><i class="fas fa-check-square"></i> チェック問題</a>
+                            <hr>
+                            <form action="{{ url_for('reset_my_progress') }}" method="post" class="menu-item-form" onsubmit="return confirm('本当に全ての進捗をリセットしますか？この操作は元に戻せません。');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="menu-item-button menu-item-danger">
+                                    <i class="fas fa-trash-alt"></i>
+                                    <span>進捗をリセット</span>
+                                </button>
+                            </form>
+                            {% if current_user.is_admin %}
+                            <hr>
+                            <a href="{{ url_for('admin.index') }}"><i class="fas fa-cogs"></i> 管理者ページ</a>
+                            {% endif %}
+                            <hr>
+                            <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> ログアウト</a>
+                        </div>
+                    </div>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-header-login">ログイン</a>
+                    <a href="{{ url_for('register') }}" class="btn btn-header-register">ユーザー登録</a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <div class="main-content-wrapper">
+        <div class="flash-message-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show" role="alert" style="margin-bottom: 1rem;">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        {% block content %}{% endblock %}
+    </div>
+    
+    {% if bootstrap %}
+        {{ bootstrap.load_js() }}
+    {% endif %}
+    
+    {% block extra_script %}{% endblock %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuToggleBtn = document.getElementById('menu-toggle-btn');
+            const menuDropdown = document.getElementById('menu-dropdown');
+
+            if (menuToggleBtn) {
+                menuToggleBtn.addEventListener('click', function(event) {
+                    event.stopPropagation();
+                    menuDropdown.classList.toggle('show');
+                });
+            }
+
+            window.addEventListener('click', function(event) {
+                if (menuDropdown && menuDropdown.classList.contains('show')) {
+                    if (!menuToggleBtn.contains(event.target) && !menuDropdown.contains(event.target)) {
+                        menuDropdown.classList.remove('show');
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
