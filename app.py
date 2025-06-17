@@ -26,9 +26,20 @@ if not os.path.exists(instance_folder_path):
     os.makedirs(instance_folder_path)
 
 database_uri = os.environ.get('DATABASE_URL')
-if database_uri and database_uri.startswith("postgres://"):
-    database_uri = database_uri.replace("postgres://", "postgresql://", 1)
-app.config['SQLALCHEMY_DATABASE_URI'] = database_uri or 'sqlite:///' + os.path.join(instance_folder_path, 'quiz_app.db')
+if database_uri:
+    # RenderのPostgreSQL接続URIをHeroku互換からSQLAlchemy互換へ置換
+    if database_uri.startswith("postgres://"):
+        database_uri = database_uri.replace("postgres://", "postgresql://", 1)
+    
+    # ★★★ ここが重要 ★★★
+    # PostgreSQL接続の場合、クライアントのエンコーディングをUTF-8に指定
+    if "postgresql" in database_uri and "?" not in database_uri:
+        database_uri += "?client_encoding=utf8"
+        
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
+else:
+    # ローカル環境(SQLite)用の設定
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(instance_folder_path, 'quiz_app.db')
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a-very-secret-key-for-dev-only')
