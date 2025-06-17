@@ -142,13 +142,261 @@ def create_admin_command():
     db.session.commit()
     print('SUCCESS: Admin user created.')
 
-# --- ルート定義 ---
+# --- 認証ルート ---
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('quiz_range_select'))
+    from forms import RegistrationForm
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(username=form.username.data, email=form.email.data)
+        user.set_password(form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash('登録が完了しました。ログインしてください。', 'success')
+        return redirect(url_for('login'))
+    return render_template('register.html', title='ユーザー登録', form=form)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('quiz_range_select'))
+    from forms import LoginForm
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user is None or not user.check_password(form.password.data):
+            flash('ユーザー名またはパスワードが無効です。', 'danger')
+            return redirect(url_for('login'))
+        login_user(user, remember=form.remember_me.data)
+        session.pop('user_id', None)
+        flash(f'{user.username}さん、ようこそ！', 'success')
+        next_page = request.args.get('next')
+        # GETでアクセスされるとエラーになるPOST専用ルートのリスト
+        post_only_endpoints = [
+            url_for('start_multi_quiz'), 
+            url_for('reset_my_progress')
+        ]
+        # next_pageが安全でない場合、またはPOST専用ルートの場合は、
+        # 安全なデフォルトページにリダイレクトする
+        if not next_page or urlparse(next_page).netloc != '' or next_page in post_only_endpoints:
+            next_page = url_for('quiz_range_select')
+        return redirect(next_page)
+    return render_template('login.html', title='ログイン', form=form)
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('ログアウトしました。', 'info')
+    return redirect(url_for('quiz_range_select'))
+
+
+# --- マイページ用のルート ---
+@app.route('/mypage')
+@login_required
+def mypage():
+    user_answers = UserAnswer.query.filter_by(user_id=current_user.id).all()
+    
+    total_answered = len(user_answers)
+    correct_answered = 0
+    average_accuracy = 0.0
+
+    if total_answered > 0:
+        correct_answered = sum(1 for answer in user_answers if answer.is_correct)
+        average_accuracy = (correct_answered / total_answered) * 100
+
+    subquery = db.session.query(
+        UserAnswer.question_id,
+        func.max(UserAnswer.timestamp).label('max_timestamp')
+    ).filter_by(user_id=current_user.id).group_by(UserAnswer.question_id).subquery()
+
+    latest_answers = db.session.query(UserAnswer).join(
+        subquery,
+        db.and_(
+            UserAnswer.question_id == subquery.c.question_id,
+            UserAnswer.timestamp == subquery.c.max_timestamp,
+            UserAnswer.user_id == current_user.id
+        )
+    ).order_by(UserAnswer.timestamp.desc()).all()
+
+
+    return render_template(
+        'mypage.html',
+        title='マイページ',
+        total_answered=total_answered,
+        correct_answered=correct_answered,
+        average_accuracy=average_accuracy,
+        answer_history=latest_answers
+    )
+
+@app.route('/edit_profile', methods=['GET', 'POST'])
+@login_required
+def edit_profile():
+    form = EditProfileForm()
+    if form.validate_on_submit():
+        current_user.username = form.username.data
+        current_user.email = form.email.data
+        if form.password.data:
+            current_user.set_password(form.password.data)
+        db.session.commit()
+        flash('プロフィールが更新されました。', 'success')
+        return redirect(url_for('edit_profile'))
+    elif request.method == 'GET':
+        form.username.data = current_user.username
+        form.email.data = current_user.email
+    return render_template('edit_profile.html', title='プロフィール編集', form=form)
+
+
+# ★★★ 新規追加: ランキング表示ルート ★★★
+@app.route('/ranking')
+@login_required
+def ranking():
+    # URLクエリから集計期間を取得 (例: /ranking?period=daily), デフォルトは'weekly'
+    period = request.args.get('period', 'weekly')
+    
+    # 現在時刻(UTC)を取得
+    now_utc = datetime.datetime.now(pytz.utc)
+    
+    # 期間に応じて開始日時とタイトルを設定
+    if period == 'daily':
+        # JSTでの今日の始まりを計算し、UTCに変換してDB検索に使用
+        jst = pytz.timezone('Asia/Tokyo')
+        now_jst = now_utc.astimezone(jst)
+        start_of_day_jst = now_jst.replace(hour=0, minute=0, second=0, microsecond=0)
+        start_date = start_of_day_jst.astimezone(pytz.utc)
+        title = '日間ランキング (解答数)'
+    elif period == 'monthly':
+        jst = pytz.timezone('Asia/Tokyo')
+        now_jst = now_utc.astimezone(jst)
+        start_of_month_jst = now_jst.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        start_date = start_of_month_jst.astimezone(pytz.utc)
+        title = '月間ランキング (解答数)'
+    else: # デフォルトは週間 (過去7日間)
+        period = 'weekly'
+        start_date = now_utc - timedelta(days=7)
+        title = '週間ランキング (解答数)'
+
+    # ランキングデータを集計するクエリ
+    ranking_data = db.session.query(
+        User.username,
+        func.count(UserAnswer.id).label('answer_count')
+    ).join(
+        UserAnswer, User.id == UserAnswer.user_id
+    ).filter(
+        UserAnswer.timestamp >= start_date
+    ).group_by(
+        User.id
+    ).order_by(
+        func.count(UserAnswer.id).desc()
+    ).limit(20).all()  # 上位20件まで表示
+
+    return render_template(
+        'ranking.html',
+        title=title,
+        ranking_data=ranking_data,
+        current_period=period
+    )
+
+# --- ★★★ 新規追加: 試験モード情報ページ表示ルート ★★★ ---
+@app.route('/exam')
+@login_required
+def exam_info():
+    """試験モードの概要を表示するページ"""
+    return render_template('exam.html', title='試験モード')
+
+# --- クイズ関連ルート ---
+@app.route('/')
+def quiz_range_select():
+    quiz_ranges = get_dynamic_ranges()
+    if not current_user.is_authenticated and 'user_id' not in session:
+        session['user_id'] = str(os.urandom(16).hex())
+    return render_template('quiz_range_select.html', quiz_ranges=quiz_ranges)
+
+
+@app.route('/start_multi_quiz', methods=['POST'])
+@login_required # ★★★ 修正箇所 ★★★
+def start_multi_quiz():
+    selected_range_keys = request.form.getlist('selected_ranges')
+    if not selected_range_keys:
+        flash("問題範囲を選択してください。", "warning")
+        return redirect(url_for('quiz_range_select'))
+
+    all_question_ids = []
+    for range_key in selected_range_keys:
+        try:
+            parts = range_key.split('_')
+            if len(parts) == 3 and parts[0] == 'range':
+                start_id = int(parts[1])
+                end_id = int(parts[2])
+                range_question_ids = [q.id for q in Question.query.filter(Question.id.between(start_id, end_id)).with_entities(Question.id).all()]
+                all_question_ids.extend(range_question_ids)
+        except (ValueError, IndexError):
+            continue
+
+    if not all_question_ids:
+        flash("選択された範囲に有効な問題が見つかりませんでした。", "warning")
+        return redirect(url_for('quiz_range_select'))
+
+    random.shuffle(all_question_ids)
+
+    # セッション初期化
+    session.pop(EXAM_MODE_KEY, None)
+    session.pop('exam_end_time', None)
+    session.pop(REVIEW_MODE_KEY, None)
+    session.pop(REVIEW_TYPE_KEY, None)
+    session['correct_count'] = 0
+    session['total_questions_answered'] = 0
+    session['answered_question_ids'] = []
+    session['current_range_key'] = 'multi_select'
+    session.pop('last_answer_result', None)
+    session.pop('last_user_answer', None)
+    session['quiz_order_ids'] = all_question_ids
+    session['current_question_index_in_order'] = 0
+        
+    first_question_id = all_question_ids[0]
+    return redirect(url_for('show_question', question_id=first_question_id))
+
+
+@app.route('/start_exam', methods=['POST'])
+@login_required # ★★★ 修正箇所 ★★★
+def start_exam():
+    all_q_ids = [q.id for q in Question.query.with_entities(Question.id).all()]
+    if len(all_q_ids) < 20:
+        flash(f"問題が20問に満たないため、全{len(all_q_ids)}問で試験を開始します。", "warning")
+        exam_questions_ids = all_q_ids
+    else:
+        exam_questions_ids = random.sample(all_q_ids, 20)
+
+    session.pop(REVIEW_MODE_KEY, None)
+    session.pop(REVIEW_TYPE_KEY, None)
+    session['correct_count'] = 0
+    session['total_questions_answered'] = 0
+    session['answered_question_ids'] = []
+    session['current_range_key'] = 'exam_mode'
+    session.pop('last_answer_result', None)
+    session.pop('last_user_answer', None)
+    
+    session[EXAM_MODE_KEY] = True
+    end_time = datetime.datetime.now(pytz.utc) + datetime.timedelta(minutes=1)
+    session['exam_end_time'] = end_time.isoformat()
+    session['quiz_order_ids'] = exam_questions_ids
+    session['current_question_index_in_order'] = 0
+
+    if not exam_questions_ids:
+        flash("試験を開始できる問題がありません。", "danger")
+        return redirect(url_for('quiz_range_select'))
+        
+    first_question_id = exam_questions_ids[0]
+    return redirect(url_for('show_question', question_id=first_question_id))
+
 @app.route('/question/<int:question_id>')
 @login_required
 def show_question(question_id):
     question = Question.query.get_or_404(question_id)
     options_list = question.options
-    correct_answers_list = question.correct_answer 
+    correct_answers_list = question.correct_answer
     is_multi_select_question = isinstance(correct_answers_list, list) and len(correct_answers_list) > 1
     
     # ... (以下のロジックは変更なし)
@@ -225,7 +473,19 @@ def handle_answer():
         )
         db.session.add(new_user_answer)
         db.session.commit()
-    
+
+        if session.get(REVIEW_MODE_KEY) and session.get(REVIEW_TYPE_KEY) == 'incorrect' and is_correct:
+            UserAnswer.query.filter_by(user_id=user_id, question_id=question_id, is_correct=False).delete()
+            db.session.commit()
+
+    answered_question_ids_in_session = session.get('answered_question_ids', [])
+    if question_id not in answered_question_ids_in_session:
+        if is_correct:
+            session['correct_count'] = session.get('correct_count', 0) + 1
+        session['total_questions_answered'] = session.get('total_questions_answered', 0) + 1
+        answered_question_ids_in_session.append(question_id)
+        session['answered_question_ids'] = answered_question_ids_in_session
+                
     session['last_answer_result'] = {
         'is_correct': is_correct,
         'message': "正解！" if is_correct else "不正解！",

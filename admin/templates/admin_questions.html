@@ -31,7 +31,7 @@
                 <td>{{ question.question_text[:60] }}{% if question.question_text|length > 60 %}...{% endif %}</td>
                 <td>
                     {% if question.options %}
-                        {% set opts = question.options|fromjson %}
+                        {% set opts = question.options %}
                         <ul class="list-unstyled mb-0">
                         {% for opt_item in opts %}
                             <li>{{ opt_item[:20] }}{% if opt_item|length > 20 %}...{% endif %}</li>
@@ -41,7 +41,7 @@
                 </td>
                 <td>
                     {% if question.correct_answer %}
-                        {% set ans = question.correct_answer|fromjson %}
+                        {% set ans = question.correct_answer %}
                          <ul class="list-unstyled mb-0">
                         {% for ans_item in ans %}
                             <li class="text-success fw-bold">{{ ans_item[:20] }}{% if ans_item|length > 20 %}...{% endif %}</li>

@@ -2,7 +2,6 @@ from flask import render_template, redirect, url_for, flash, request, current_ap
 from flask_login import login_required
 from werkzeug.utils import secure_filename
 import os
-import json
 
 from . import admin_bp
 from .decorators import admin_required
@@ -53,14 +52,12 @@ def add_question():
         try:
             options_list = [opt.strip() for opt in form.options_text.data.split(',') if opt.strip()]
             if not options_list: raise ValueError("選択肢は1つ以上入力してください。")
-            options_json = json.dumps(options_list)
 
             correct_answers_list = [ans.strip() for ans in form.correct_answers_text.data.split(',') if ans.strip()]
             if not correct_answers_list: raise ValueError("正解は1つ以上入力してください。")
             for ca in correct_answers_list:
                 if ca not in options_list:
                     raise ValueError(f"正解 '{ca}' は選択肢の中に存在しません。")
-            correct_answers_json = json.dumps(correct_answers_list)
 
             image_filename_to_save = None
             if form.image.data:
@@ -78,8 +75,8 @@ def add_question():
 
             new_question = Question(
                 question_text=form.question_text.data,
-                options=options_json,
-                correct_answer=correct_answers_json,
+                options=options_list,
+                correct_answer=correct_answers_list,
                 explanation=form.explanation.data,
                 image_filename=image_filename_to_save
             )
@@ -105,15 +102,10 @@ def edit_question(question_id):
     form = QuestionForm(obj=question)
 
     if request.method == 'GET':
-        try:
             if question.options:
-                form.options_text.data = ', '.join(json.loads(question.options))
+                form.options_text.data = ', '.join(map(str, question.options))
             if question.correct_answer:
-                form.correct_answers_text.data = ', '.join(json.loads(question.correct_answer))
-        except (json.JSONDecodeError, TypeError):
-            flash('問題データ(選択肢/正解)の読み込みに失敗しました。手動で確認・修正してください。', 'warning')
-            form.options_text.data = question.options if isinstance(question.options, str) else ''
-            form.correct_answers_text.data = question.correct_answer if isinstance(question.correct_answer, str) else ''
+                form.correct_answers_text.data = ', '.join(map(str, question.correct_answer))
 
     if form.validate_on_submit():
         try:
@@ -121,14 +113,14 @@ def edit_question(question_id):
             
             options_list = [opt.strip() for opt in form.options_text.data.split(',') if opt.strip()]
             if not options_list: raise ValueError("選択肢は1つ以上入力してください。")
-            question.options = json.dumps(options_list)
+            question.options = options_list
 
             correct_answers_list = [ans.strip() for ans in form.correct_answers_text.data.split(',') if ans.strip()]
             if not correct_answers_list: raise ValueError("正解は1つ以上入力してください。")
             for ca in correct_answers_list:
                 if ca not in options_list:
                     raise ValueError(f"正解 '{ca}' は選択肢の中に存在しません。")
-            question.correct_answer = json.dumps(correct_answers_list)
+            question.correct_answer = correct_answers_list
             
             question.explanation = form.explanation.data
 
