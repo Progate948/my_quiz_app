@@ -127,36 +127,54 @@ def load_user(user_id):
 
 
 # --- データベース初期化関数 (Questionデータの投入) ---
-def init_db_questions():
+def seed_initial_data():
+    # ユーザーが存在しない場合のみ、管理者ユーザーを作成
+    if not User.query.filter_by(username='admin').first():
+        admin_user = User(username='admin', email='admin@example.com', is_admin=True)
+        admin_user.set_password('admin') # パスワードは後で変更してください
+        db.session.add(admin_user)
+        print('INFO: Admin user created.')
+
     if not Question.query.first():
         questions_data = [
-                {"id": 1, "text": "日本の首都はどこですか？", "options": ["東京", "大阪", "京都", "札幌"], "answer": json.dumps(["東京"]), "explanation": "東京は日本の政治、経済、文化の中心地です。", "image": None},
-                {"id": 2, "text": "Pythonの主要なWebフレームワークはFlaskと何ですか？", "options": ["Node.js", "Django", "Ruby on Rails", "PHP"], "answer": json.dumps(["Django"]), "explanation": "Djangoは、Pythonのもう一つのフルスタックなWebフレームワークです。", "image": "images/image_e0a79a.jpg"},
-                {"id": 3, "text": "HTMLは何の略ですか？", "options": ["High-Tech Markup Language", "HyperText Markup Language", "Home Tool Markup Language", "Hyperlink and Text Markup Language"], "answer": json.dumps(["HyperText Markup Language", "Home Tool Markup Language"]), "explanation": "HTMLはWebページの構造を記述するための言語です。ここでは複数選択の例として2つの選択肢が正解とされています。", "image": None},
-                {"id": 4, "text": "TCP/IPモデルで、HTTPプロトコルが動作するのはどの層ですか？", "options": ["ネットワーク層", "トランスポート層", "アプリケーション層", "データリンク層"], "answer": json.dumps(["アプリケーション層"]), "explanation": "HTTPはTCP/IPの最上位層であるアプリケーション層で動作します。", "image": None},
-                {"id": 5, "text": "MACアドレスは何ビットで構成されますか？", "options": ["16ビット", "32ビット", "48ビット", "64ビット"], "answer": json.dumps(["48ビット"]), "explanation": "MACアドレスは、ネットワークインターフェースに割り当てられる物理アドレスで、48ビット（6バイト）です。", "image": None},
-                {"id": 6, "text": "Webページのスタイルを指定する言語は何ですか？", "options": ["HTML", "JavaScript", "CSS", "Python"], "answer": json.dumps(["CSS"]), "explanation": "CSS（Cascading Style Sheets）はWebページのスタイルを指定するための言語です。", "image": None},
-                {"id": 7, "text": "HTTPステータスコード200は何を意味しますか？", "options": ["リクエストエラー", "サーバーエラー", "成功", "リダイレクト"], "answer": json.dumps(["成功"]), "explanation": "HTTPステータスコード200は「OK」を意味し、リクエストが成功したことを示します。", "image": None},
-                {"id": 8, "text": "Gitで変更を記録するコマンドは何ですか？", "options": ["git push", "git pull", "git commit", "git clone"], "answer": json.dumps(["git commit"]), "explanation": "git commitは、ローカルリポジトリに変更を記録するために使われます。", "image": None},
-                {"id": 9, "text": "データベースにおける「行」の別名は何ですか？", "options": ["カラム", "テーブル", "レコード", "フィールド"], "answer": json.dumps(["レコード"]), "explanation": "データベースのテーブルにおける行はレコード、列はフィールド（またはカラム）と呼ばれます。", "image": None},
-                {"id": 10, "text": "プログラミングで条件分岐を行う際に使用されるキーワードは何ですか？", "options": ["loop", "function", "if", "array"], "answer": json.dumps(["if"]), "explanation": "if文は、条件に基づいて異なる処理を実行するために使われます。", "image": None},
-                {"id": 11, "text": "ポート番号80を使用するプロトコルは何ですか？", "options": ["HTTPS", "FTP", "SSH", "HTTP"], "answer": json.dumps(["HTTP"]), "explanation": "HTTPプロトコルはデフォルトでポート番号80を使用します。", "image": None},
-                {"id": 12, "text": "データを永続的に保存するためのシステムは何ですか？", "options": ["RAM", "CPU", "データベース", "キャッシュ"], "answer": json.dumps(["データベース"]), "explanation": "データベースは大量のデータを効率的に管理し、永続的に保存するためのシステムです。", "image": None},
-                {"id": 13, "text": "Pythonのパッケージ管理システムは何ですか？", "options": ["npm", "RubyGems", "pip", "Composer"], "answer": json.dumps(["pip"]), "explanation": "pipはPythonの公式パッケージ管理ツールです。", "image": None},
-                {"id": 14, "text": "JavaScriptで要素を取得するDOMメソッドの1つは何ですか？", "options": ["getElementById", "get_element_by_id", "selectElement", "queryElement"], "answer": json.dumps(["getElementById"]), "explanation": "JavaScriptのdocument.getElementById()は、IDを指定して要素を取得します。", "image": None},
-                {"id": 15, "text": "WebブラウザでHTML、CSS、JavaScriptを実行するものは何ですか？", "options": ["サーバー", "インタープリタ", "レンダリングエンジン", "コンパイラ"], "answer": json.dumps(["レンダリングエンジン"]), "explanation": "Webブラウザ内のレンダリングエンジンがこれらのファイルを解析し、表示します。", "image": None}
-            ]
+            {"id": 1, "text": "日本の首都はどこですか？", "options": ["東京", "大阪", "京都", "札幌"], "answer": json.dumps(["東京"]), "explanation": "東京は日本の政治、経済、文化の中心地です。", "image": None},
+            {"id": 2, "text": "Pythonの主要なWebフレームワークはFlaskと何ですか？", "options": ["Node.js", "Django", "Ruby on Rails", "PHP"], "answer": json.dumps(["Django"]), "explanation": "Djangoは、Pythonのもう一つのフルスタックなWebフレームワークです。", "image": "images/image_e0a79a.jpg"},
+            {"id": 3, "text": "HTMLは何の略ですか？", "options": ["High-Tech Markup Language", "HyperText Markup Language", "Home Tool Markup Language", "Hyperlink and Text Markup Language"], "answer": json.dumps(["HyperText Markup Language", "Home Tool Markup Language"]), "explanation": "HTMLはWebページの構造を記述するための言語です。ここでは複数選択の例として2つの選択肢が正解とされています。", "image": None},
+            {"id": 4, "text": "TCP/IPモデルで、HTTPプロトコルが動作するのはどの層ですか？", "options": ["ネットワーク層", "トランスポート層", "アプリケーション層", "データリンク層"], "answer": json.dumps(["アプリケーション層"]), "explanation": "HTTPはTCP/IPの最上位層であるアプリケーション層で動作します。", "image": None},
+            {"id": 5, "text": "MACアドレスは何ビットで構成されますか？", "options": ["16ビット", "32ビット", "48ビット", "64ビット"], "answer": json.dumps(["48ビット"]), "explanation": "MACアドレスは、ネットワークインターフェースに割り当てられる物理アドレスで、48ビット（6バイト）です。", "image": None},
+            {"id": 6, "text": "Webページのスタイルを指定する言語は何ですか？", "options": ["HTML", "JavaScript", "CSS", "Python"], "answer": json.dumps(["CSS"]), "explanation": "CSS（Cascading Style Sheets）はWebページのスタイルを指定するための言語です。", "image": None},
+            {"id": 7, "text": "HTTPステータスコード200は何を意味しますか？", "options": ["リクエストエラー", "サーバーエラー", "成功", "リダイレクト"], "answer": json.dumps(["成功"]), "explanation": "HTTPステータスコード200は「OK」を意味し、リクエストが成功したことを示します。", "image": None},
+            {"id": 8, "text": "Gitで変更を記録するコマンドは何ですか？", "options": ["git push", "git pull", "git commit", "git clone"], "answer": json.dumps(["git commit"]), "explanation": "git commitは、ローカルリポジトリに変更を記録するために使われます。", "image": None},
+            {"id": 9, "text": "データベースにおける「行」の別名は何ですか？", "options": ["カラム", "テーブル", "レコード", "フィールド"], "answer": json.dumps(["レコード"]), "explanation": "データベースのテーブルにおける行はレコード、列はフィールド（またはカラム）と呼ばれます。", "image": None},
+            {"id": 10, "text": "プログラミングで条件分岐を行う際に使用されるキーワードは何ですか？", "options": ["loop", "function", "if", "array"], "answer": json.dumps(["if"]), "explanation": "if文は、条件に基づいて異なる処理を実行するために使われます。", "image": None},
+            {"id": 11, "text": "ポート番号80を使用するプロトコルは何ですか？", "options": ["HTTPS", "FTP", "SSH", "HTTP"], "answer": json.dumps(["HTTP"]), "explanation": "HTTPプロトコルはデフォルトでポート番号80を使用します。", "image": None},
+            {"id": 12, "text": "データを永続的に保存するためのシステムは何ですか？", "options": ["RAM", "CPU", "データベース", "キャッシュ"], "answer": json.dumps(["データベース"]), "explanation": "データベースは大量のデータを効率的に管理し、永続的に保存するためのシステムです。", "image": None},
+            {"id": 13, "text": "Pythonのパッケージ管理システムは何ですか？", "options": ["npm", "RubyGems", "pip", "Composer"], "answer": json.dumps(["pip"]), "explanation": "pipはPythonの公式パッケージ管理ツールです。", "image": None},
+            {"id": 14, "text": "JavaScriptで要素を取得するDOMメソッドの1つは何ですか？", "options": ["getElementById", "get_element_by_id", "selectElement", "queryElement"], "answer": json.dumps(["getElementById"]), "explanation": "JavaScriptのdocument.getElementById()は、IDを指定して要素を取得します。", "image": None},
+            {"id": 15, "text": "WebブラウザでHTML、CSS、JavaScriptを実行するものは何ですか？", "options": ["サーバー", "インタープリタ", "レンダリングエンジン", "コンパイラ"], "answer": json.dumps(["レンダリングエンジン"]), "explanation": "Webブラウザ内のレンダリングエンジンがこれらのファイルを解析し、表示します。", "image": None}
+        ]
         for data in questions_data:
-            question = Question(id=data['id'], question_text=data['text'], options=json.dumps(data['options']), correct_answer=data['answer'], explanation=data['explanation'], image_filename=data['image'])
+            # JSON形式に変換するのをやめ、直接リストとして渡す（モデルをdb.JSON型にした場合）
+            # もしText型のままなら json.dumps() は必要です。
+            # ここではdb.JSONを想定したコードに修正します。
+            question = Question(id=data['id'], question_text=data['text'], options=data['options'], correct_answer=data['answer'], explanation=data['explanation'], image_filename=data['image'])
             db.session.add(question)
-        db.session.commit()
         print('INFO: Initial question data loaded.')
+    
+    db.session.commit()
 
 
 # --- アプリケーション初期化処理 ---
-with app.app_context():
-    setup_admin_upload_folder()
-    init_db_questions()
+# with app.app_context():
+#     setup_admin_upload_folder()
+#     init_db_questions()
+
+# --- ▼▼▼ 新しくCLIコマンドを登録 ▼▼▼ ---
+@app.cli.command("seed-db")
+def seed_db_command():
+    """データベースに初期データを投入します。"""
+    seed_initial_data()
+    print("Database seeded.")
 
 
 # --- 認証ルート ---
