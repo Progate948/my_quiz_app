@@ -120,8 +120,8 @@ def load_user(user_id):
 def seed_initial_data():
     if not Question.query.first():
         questions_data = [
-            {"id": 1, "text": "日本の首都はどこですか？", "options": ["東京", "大阪", "京都", "札幌"], "answer": json.dumps(["東京"]), "explanation": "東京は日本の政治、経済、文化の中心地です。", "image": None},
-            {"id": 2, "text": "Pythonの主要なWebフレームワークはFlaskと何ですか？", "options": ["Node.js", "Django", "Ruby on Rails", "PHP"], "answer": json.dumps(["Django"]), "explanation": "Djangoは、Pythonのもう一つのフルスタックなWebフレームワークです。", "image": "images/image_e0a79a.jpg"},
+            {"id": 1, "text": "日本の首都はどこですか？", "options": ["東京", "大阪", "京都", "札幌"], "answer": ["東京"], "explanation": "東京は日本の政治、経済、文化の中心地です。", "image": None},
+            {"id": 2, "text": "Pythonの主要なWebフレームワークはFlaskと何ですか？", "options": ["Node.js", "Django", "Ruby on Rails", "PHP"], "answer": ["Django"], "explanation": "Djangoは、Pythonのもう一つのフルスタックなWebフレームワークです。", "image": "images/image_e0a79a.jpg"},
             {"id": 3, "text": "HTMLは何の略ですか？", "options": ["High-Tech Markup Language", "HyperText Markup Language", "Home Tool Markup Language", "Hyperlink and Text Markup Language"], "answer": json.dumps(["HyperText Markup Language", "Home Tool Markup Language"]), "explanation": "HTMLはWebページの構造を記述するための言語です。ここでは複数選択の例として2つの選択肢が正解とされています。", "image": None},
             {"id": 4, "text": "TCP/IPモデルで、HTTPプロトコルが動作するのはどの層ですか？", "options": ["ネットワーク層", "トランスポート層", "アプリケーション層", "データリンク層"], "answer": json.dumps(["アプリケーション層"]), "explanation": "HTTPはTCP/IPの最上位層であるアプリケーション層で動作します。", "image": None},
             {"id": 5, "text": "MACアドレスは何ビットで構成されますか？", "options": ["16ビット", "32ビット", "48ビット", "64ビット"], "answer": json.dumps(["48ビット"]), "explanation": "MACアドレスは、ネットワークインターフェースに割り当てられる物理アドレスで、48ビット（6バイト）です。", "image": None},
