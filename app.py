@@ -9,13 +9,13 @@ import json
 import os
 import random
 import datetime
-from datetime import timedelta # ★★★ ランキング期間計算のために追加 ★★★
+from datetime import timedelta
 import pytz
-from forms import RegistrationForm, LoginForm, QuestionForm, EditProfileForm
 
 from models import db, User, Question, UserAnswer, UserCheck
 from admin import admin_bp
 from admin.routes import setup_admin_upload_folder
+from forms import RegistrationForm, LoginForm, QuestionForm, EditProfileForm
 
 app = Flask(__name__)
 
@@ -26,19 +26,13 @@ instance_folder_path = os.path.join(
 if not os.path.exists(instance_folder_path):
     os.makedirs(instance_folder_path)
 
-# --- 修正前 ---
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(instance_folder_path, 'quiz_app.db')
-# --- 修正後 ---
-# RenderなどのPaaSは、DATABASE_URLという環境変数を自動で設定してくれます。
-# もしそれがなければ、これまで通りSQLiteを使う、という設定です。
+# --- 本番環境(Render)とローカル環境でデータベース設定を切り替え ---
 database_uri = os.environ.get('DATABASE_URL')
 if database_uri and database_uri.startswith("postgres://"):
     database_uri = database_uri.replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = database_uri or 'sqlite:///' + os.path.join(instance_folder_path, 'quiz_app.db')
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# --- 修正前 ---
-# app.config['SECRET_KEY'] = 'your_secret_key_here'
-# --- 修正後 ---
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'a-very-secret-key-for-dev-only')
 app.config['BOOTSTRAP_SERVE_LOCAL'] = True
 
@@ -58,11 +52,10 @@ login_manager.login_message_category = "info"
 app.register_blueprint(admin_bp)
 
 
-# --- JSONをテンプレートで使えるようにするカスタムフィルタ ---
+# --- カスタムフィルタ ---
 @app.template_filter('fromjson')
 def fromjson_filter(value):
-    if value is None:
-        return []
+    if value is None: return []
     try:
         loaded_value = json.loads(value)
         return loaded_value if isinstance(loaded_value, list) else [loaded_value]
@@ -71,14 +64,11 @@ def fromjson_filter(value):
 
 @app.template_filter('to_jst_str')
 def to_jst_str_filter(dt):
-    if dt is None:
-        return ""
+    if dt is None: return ""
     utc_dt = dt.replace(tzinfo=pytz.utc)
     jst_dt = utc_dt.astimezone(pytz.timezone('Asia/Tokyo'))
     return jst_dt.strftime('%Y-%m-%d %H:%M')
 
-
-# --- テンプレートコンテキストプロセッサ (datetimeを渡す) ---
 @app.context_processor
 def inject_current_year():
     return {'current_year': datetime.date.today().year}
@@ -114,7 +104,7 @@ def get_dynamic_ranges(range_size=5):
     return ranges
 
 
-# --- 定数と設定 ---
+# --- 定数 ---
 REVIEW_MODE_KEY = 'review_mode'
 REVIEW_TYPE_KEY = 'review_type'
 EXAM_MODE_KEY = 'is_exam_mode'
@@ -128,13 +118,6 @@ def load_user(user_id):
 
 # --- データベース初期化関数 (Questionデータの投入) ---
 def seed_initial_data():
-    # ユーザーが存在しない場合のみ、管理者ユーザーを作成
-    if not User.query.filter_by(username='admin').first():
-        admin_user = User(username='admin', email='admin@example.com', is_admin=True)
-        admin_user.set_password('admin') # パスワードは後で変更してください
-        db.session.add(admin_user)
-        print('INFO: Admin user created.')
-
     if not Question.query.first():
         questions_data = [
             {"id": 1, "text": "日本の首都はどこですか？", "options": ["東京", "大阪", "京都", "札幌"], "answer": json.dumps(["東京"]), "explanation": "東京は日本の政治、経済、文化の中心地です。", "image": None},
@@ -154,13 +137,9 @@ def seed_initial_data():
             {"id": 15, "text": "WebブラウザでHTML、CSS、JavaScriptを実行するものは何ですか？", "options": ["サーバー", "インタープリタ", "レンダリングエンジン", "コンパイラ"], "answer": json.dumps(["レンダリングエンジン"]), "explanation": "Webブラウザ内のレンダリングエンジンがこれらのファイルを解析し、表示します。", "image": None}
         ]
         for data in questions_data:
-            # JSON形式に変換するのをやめ、直接リストとして渡す（モデルをdb.JSON型にした場合）
-            # もしText型のままなら json.dumps() は必要です。
-            # ここではdb.JSONを想定したコードに修正します。
             question = Question(id=data['id'], question_text=data['text'], options=data['options'], correct_answer=data['answer'], explanation=data['explanation'], image_filename=data['image'])
             db.session.add(question)
         print('INFO: Initial question data loaded.')
-    
     db.session.commit()
 
 
@@ -172,10 +151,20 @@ def seed_initial_data():
 # --- ▼▼▼ 新しくCLIコマンドを登録 ▼▼▼ ---
 @app.cli.command("seed-db")
 def seed_db_command():
-    """データベースに初期データを投入します。"""
     seed_initial_data()
-    print("Database seeded.")
+    print("Database seeded with questions.")
 
+@app.cli.command("create-admin")
+def create_admin_command():
+    """管理者ユーザーを作成します。"""
+    if User.query.filter_by(username='admin').first():
+        print('INFO: Admin user already exists.')
+        return
+    admin_user = User(username='admin', email='admin@example.com', is_admin=True)
+    admin_user.set_password(os.environ.get('ADMIN_PASSWORD', 'defaultadminpass'))
+    db.session.add(admin_user)
+    db.session.commit()
+    print('SUCCESS: Admin user created.')
 
 # --- 認証ルート ---
 @app.route('/register', methods=['GET', 'POST'])
@@ -479,58 +468,28 @@ def show_question(question_id):
 
 
 @app.route('/answer', methods=['POST'])
-@login_required # ★★★ 修正箇所 ★★★
+@login_required
 def handle_answer():
-    if session.get(EXAM_MODE_KEY):
-        end_time_str = session.get('exam_end_time')
-        if end_time_str:
-            end_time = datetime.datetime.fromisoformat(end_time_str)
-            if datetime.datetime.now(pytz.utc) > end_time:
-                flash("時間切れです！試験を終了します。", "warning")
-                return redirect(url_for('submit_exam'))
-
-    user_selected_options = request.form.getlist('selected_option')
-    question_id = request.form.get('question_id', type=int)
-
-    if not user_selected_options or question_id is None:
-        flash("解答が選択されていないか、問題IDが不明です。", "warning")
-        return redirect(request.referrer or url_for('quiz_range_select'))
-
+    # ... (前略) ...
     question = Question.query.get_or_404(question_id)
-    
-    try:
-        correct_answers_list = json.loads(question.correct_answer)
-        if not isinstance(correct_answers_list, list):
-            correct_answers_list = [str(correct_answers_list)]
-    except json.JSONDecodeError:
-        correct_answers_list = [str(question.correct_answer)]
+    correct_answers_list = question.correct_answer
 
     is_correct = (set(user_selected_options) == set(correct_answers_list))
-    correct_answer_for_display = " & ".join(correct_answers_list)
+    
+    # 表示用の正解文字列を作成
+    correct_answer_for_display = " & ".join(map(str, correct_answers_list))
 
     if current_user.is_authenticated:
         user_id = current_user.id
         new_user_answer = UserAnswer(
             user_id=user_id,
             question_id=question.id,
-            user_selected_option=user_selected_options, # json.dumps() を削除
+            user_selected_option=user_selected_options, # db.JSONなのでdumpsは不要
             is_correct=is_correct
         )
         db.session.add(new_user_answer)
         db.session.commit()
-
-        if session.get(REVIEW_MODE_KEY) and session.get(REVIEW_TYPE_KEY) == 'incorrect' and is_correct:
-            UserAnswer.query.filter_by(user_id=user_id, question_id=question_id, is_correct=False).delete()
-            db.session.commit()
-
-    answered_question_ids_in_session = session.get('answered_question_ids', [])
-    if question_id not in answered_question_ids_in_session:
-        if is_correct:
-            session['correct_count'] = session.get('correct_count', 0) + 1
-        session['total_questions_answered'] = session.get('total_questions_answered', 0) + 1
-        answered_question_ids_in_session.append(question_id)
-        session['answered_question_ids'] = answered_question_ids_in_session
-        
+    
     session['last_answer_result'] = {
         'is_correct': is_correct,
         'message': "正解！" if is_correct else "不正解！",
