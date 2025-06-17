@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from sqlalchemy.types import JSON 
 
 # app.py で初期化された db インスタンスをインポートすることを想定
 # ただし、直接 app.py からインポートすると循環参照になるため、
@@ -64,8 +65,8 @@ class Question(db.Model):
     __tablename__ = 'question' # 明示的にテーブル名を指定
     id = db.Column(db.Integer, primary_key=True)
     question_text = db.Column(db.Text, nullable=False)
-    options = db.Column(db.Text, nullable=False) # JSON 文字列
-    correct_answer = db.Column(db.Text, nullable=False) # JSON 文字列
+    options = db.Column(JSON, nullable=False)
+    correct_answer = db.Column(JSON, nullable=False)
     explanation = db.Column(db.Text, nullable=True)
     image_filename = db.Column(db.String(255), nullable=True)
 
@@ -83,7 +84,7 @@ class UserAnswer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     question_id = db.Column(db.Integer, db.ForeignKey('question.id'), nullable=False)
-    user_selected_option = db.Column(db.Text, nullable=False) # JSON 文字列
+    user_selected_option = db.Column(JSON, nullable=False)
     is_correct = db.Column(db.Boolean, nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 

@@ -513,7 +513,7 @@ def handle_answer():
         new_user_answer = UserAnswer(
             user_id=user_id,
             question_id=question.id,
-            user_selected_option=json.dumps(user_selected_options),
+            user_selected_option=user_selected_options, # json.dumps() を削除
             is_correct=is_correct
         )
         db.session.add(new_user_answer)
