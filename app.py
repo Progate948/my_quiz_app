@@ -73,6 +73,21 @@ def to_jst_str_filter(dt):
     jst_dt = utc_dt.astimezone(pytz.timezone('Asia/Tokyo'))
     return jst_dt.strftime('%Y-%m-%d %H:%M')
 
+# JSON文字列をリストに変換し、カンマ区切りの文字列として表示するフィルター
+@app.template_filter('json_to_list_string')
+def json_to_list_string_filter(json_string):
+    if not isinstance(json_string, str):
+        # もしすでにリスト形式なら、そのままカンマ区切りで表示
+        return ', '.join(map(str, json_string))
+    try:
+        # JSON文字列をPythonのリストに変換
+        data_list = json.loads(json_string)
+        # リストの各要素を文字列に変換し、カンマ区切りで結合
+        return ', '.join(map(str, data_list))
+    except (json.JSONDecodeError, TypeError):
+        # 変換に失敗した場合は、元の文字列をそのまま返す
+        return json_string
+
 @app.context_processor
 def inject_current_year():
     return {'current_year': datetime.date.today().year}
