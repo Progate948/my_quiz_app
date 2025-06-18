@@ -622,8 +622,11 @@ def review_incorrect():
         if ua.question_id not in seen_question_ids:
             if ua.question_detail:
                 # ▼▼▼ json.loads() を削除 ▼▼▼
-                user_selected_display = " & ".join(map(str, ua.user_selected_option)) if ua.user_selected_option else ""
-                correct_answer_display = " & ".join(map(str, ua.question_detail.correct_answer)) if ua.question_detail.correct_answer else ""
+                user_selected_list = json.loads(ua.user_selected_option) if isinstance(ua.user_selected_option, str) else ua.user_selected_option
+                user_selected_display = " & ".join(map(str, user_selected_list))
+                
+                correct_answer_list = json.loads(ua.question_detail.correct_answer) if isinstance(ua.question_detail.correct_answer, str) else ua.question_detail.correct_answer
+                correct_answer_display = " & ".join(map(str, correct_answer_list))
                 reviewed_questions.append({
                     'question': ua.question_detail,
                     'user_selected_option': user_selected_display,
@@ -673,7 +676,8 @@ def my_checked_questions_by_type(check_type):
     for entry in checked_entries:
         if entry.question_detail:
             # ▼▼▼ json.loads() を削除 ▼▼▼
-            correct_answer_display = " & ".join(map(str, entry.question_detail.correct_answer)) if entry.question_detail.correct_answer else ""
+            correct_answer_list = json.loads(entry.question_detail.correct_answer) if isinstance(entry.question_detail.correct_answer, str) else entry.question_detail.correct_answer
+            correct_answer_display = " & ".join(map(str, correct_answer_list))
             checked_questions_data.append({
                 'question': entry.question_detail,
                 'correct_answer_display': correct_answer_display,

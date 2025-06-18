@@ -328,3 +328,16 @@ form button[type="submit"] { display: block; width: 100%; margin-top: 20px; padd
 .btn-checked-type3:hover { background-color: #d12678; border-color: #c21f6c; }
 
 .table .bi-trophy-fill { font-size: 1.5rem; }
+
+/* 問題画像の表示を調整するためのスタイル */
+.question-image-container {
+    max-width: 600px; /* 画像の最大幅を600pxに制限（この値は好みに応じて調整してください） */
+    margin: 1rem auto; /* 上下に余白(1rem)を設け、左右は中央揃えにする */
+}
+
+.question-image {
+    width: 100%; /* 親要素(container)の幅に合わせて100%表示にする */
+    height: auto; /* 高さは幅に合わせて自動調整する */
+    border-radius: 8px; /* 画像の角を少し丸くする */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 画像に少し影をつけて立体感を出す */
+}
