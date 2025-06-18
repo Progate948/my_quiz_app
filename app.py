@@ -395,7 +395,7 @@ def start_exam():
     session.pop('last_user_answer', None)
     
     session[EXAM_MODE_KEY] = True
-    end_time = datetime.datetime.now(pytz.utc) + datetime.timedelta(minutes=1)
+    end_time = datetime.datetime.now(pytz.utc) + datetime.timedelta(minutes=20)
     session['exam_end_time'] = end_time.isoformat()
     session['quiz_order_ids'] = exam_questions_ids
     session['current_question_index_in_order'] = 0
