@@ -46,15 +46,16 @@ html, body {
     position: sticky;
     top: 0;
     z-index: 1000;
+    height: 65px;
 }
 .header-content {
     display: flex;
     justify-content: center; 
     align-items: center;
-    height: 65px;
     max-width: 1200px;
     margin: 0 auto;
     position: relative; 
+    height: 100%; /* ← ★★★ これを追加 ★★★ */
 }
 .header-logo {
     font-family: 'Montserrat', sans-serif;
@@ -340,4 +341,89 @@ form button[type="submit"] { display: block; width: 100%; margin-top: 20px; padd
     height: auto; /* 高さは幅に合わせて自動調整する */
     border-radius: 8px; /* 画像の角を少し丸くする */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* 画像に少し影をつけて立体感を出す */
+}
+
+/* --- ↓↓↓レスポンシブ対応コード（最終FIX版）↓↓↓ --- */
+
+/* 【第1段階】画面幅が768px以下のデバイス（タブレットなど）向け */
+@media (max-width: 768px) {
+    /* コンテナと余白 */
+    .container {
+        padding: 20px;
+        margin: 20px auto;
+        width: 95%;
+    }
+
+    /* ヘッダー */
+    .main-header {
+        padding: 0 15px;
+        /* ★追加：ヘッダーの幅を画面に合わせ、paddingを内側に含める */
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .header-content {
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+    .header-logo {
+        font-size: 1.3rem;
+        white-space: nowrap;
+    }
+    .header-nav {
+        position: static;
+    }
+    .btn-header-login, .btn-header-register {
+        padding: 6px 12px;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+
+    /* 文字サイズ */
+    h1 { font-size: 1.8rem; }
+    h2 { font-size: 1.5rem; }
+    .question-text { font-size: 1.1em; }
+    .range-checkbox-label { padding: 15px; }
+    .range-checkbox-text { font-size: 1em; }
+
+    /* フォーム要素 */
+    .options label { padding: 12px 15px; }
+    form button[type="submit"] { padding: 12px 20px; font-size: 1em; }
+
+    /* 管理者ページ */
+    .table-responsive .btn {
+        margin-bottom: 5px;
+        display: block;
+        width: 100%;
+    }
+    .table-responsive .btn-outline-primary {
+         margin-right: 0 !important;
+    }
+}
+
+/* 【第2段階】画面幅が480px以下のデバイス（特に狭いスマホ）向け */
+@media (max-width: 480px) {
+    .main-header {
+        height: auto; /* 高さを自動調整に戻します */
+        min-height: 65px; /* PC版のヘッダーの高さ(65px)を最低限確保します */
+        padding-top: 10px;
+        padding-bottom: 10px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .header-content {
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center; 
+        gap: 8px;
+        height: auto; /* ★★★ この一行が決定打です ★★★ */
+        max-width: none;
+    }
+    .header-logo {
+        font-size: 1.4rem;
+    }
+    .btn-header-login, .btn-header-register {
+        padding: 5px 8px;   /* ボタンの余白を詰める */
+        font-size: 0.75rem; /* 文字をさらに小さくする */
+    }
 }
