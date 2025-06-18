@@ -22,7 +22,7 @@
         {# ★追加: 画像の表示 #}
         {% if item.question.image_filename %}
         <div class="question-image-container">
-            <img src="{{ url_for('static', filename='images/' + item.question.image_filename) }}" alt="問題画像" class="question-image">
+            <img src="{{ url_for('static', filename=item.question.image_filename.replace('\\', '/')) }}" alt="問題画像" class="question-image">
         </div>
         {% endif %}
         <p>あなたの解答: <strong>{{ item.user_selected_option }}</strong></p>

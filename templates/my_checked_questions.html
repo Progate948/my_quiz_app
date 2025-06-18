@@ -24,7 +24,7 @@
         <h2>No. {{ item.question.id }}: {{ item.question.question_text }}</h2>
         {% if item.question.image_filename %}
         <div class="question-image-container">
-            <img src="{{ url_for('static', filename='images/' + item.question.image_filename) }}" alt="問題画像" class="question-image">
+            <img src="{{ url_for('static', filename=item.question.image_filename.replace('\\', '/')) }}" alt="問題画像" class="question-image">
         </div>
         {% endif %}
         <p>正解: <strong>{{ item.correct_answer_display }}</strong></p>
