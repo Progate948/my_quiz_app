@@ -110,41 +110,72 @@ def load_user(user_id):
 
 # --- CLI Commands ---
 def seed_initial_data():
-    if not Question.query.first():
-        questions_data = [
-            {"id": 1, "text": "日本の首都はどこですか？", "options": ["東京", "大阪", "京都", "札幌"], "answer": ["東京"], "explanation": "東京は日本の政治、経済、文化の中心地です。", "image": None},
-            {"id": 2, "text": "Pythonの主要なWebフレームワークはFlaskと何ですか？", "options": ["Node.js", "Django", "Ruby on Rails", "PHP"], "answer": ["Django"], "explanation": "Djangoは、Pythonのもう一つのフルスタックなWebフレームワークです。", "image": "images/image_e0a79a.jpg"},
-            {"id": 3, "text": "HTMLは何の略ですか？", "options": ["High-Tech Markup Language", "HyperText Markup Language", "Home Tool Markup Language", "Hyperlink and Text Markup Language"], "answer": ["HyperText Markup Language"], "explanation": "HTMLはWebページの構造を記述するための言語です。", "image": None},
-            {"id": 4, "text": "TCP/IPモデルで、HTTPプロトコルが動作するのはどの層ですか？", "options": ["ネットワーク層", "トランスポート層", "アプリケーション層", "データリンク層"], "answer": ["アプリケーション層"], "explanation": "HTTPはTCP/IPの最上位層であるアプリケーション層で動作します。", "image": None},
-            {"id": 5, "text": "MACアドレスは何ビットで構成されますか？", "options": ["16ビット", "32ビット", "48ビット", "64ビット"], "answer": ["48ビット"], "explanation": "MACアドレスは、ネットワークインターフェースに割り当てられる物理アドレスで、48ビット（6バイト）です。", "image": None},
-            {"id": 6, "text": "Webページのスタイルを指定する言語は何ですか？", "options": ["HTML", "JavaScript", "CSS", "Python"], "answer": ["CSS"], "explanation": "CSS（Cascading Style Sheets）はWebページのスタイルを指定するための言語です。", "image": None},
-            {"id": 7, "text": "HTTPステータスコード200は何を意味しますか？", "options": ["リクエストエラー", "サーバーエラー", "成功", "リダイレクト"], "answer": ["成功"], "explanation": "HTTPステータスコード200は「OK」を意味し、リクエストが成功したことを示します。", "image": None},
-            {"id": 8, "text": "Gitで変更を記録するコマンドは何ですか？", "options": ["git push", "git pull", "git commit", "git clone"], "answer": ["git commit"], "explanation": "git commitは、ローカルリポジトリに変更を記録するために使われます。", "image": None},
-            {"id": 9, "text": "データベースにおける「行」の別名は何ですか？", "options": ["カラム", "テーブル", "レコード", "フィールド"], "answer": ["レコード"], "explanation": "データベースのテーブルにおける行はレコード、列はフィールド（またはカラム）と呼ばれます。", "image": None},
-            {"id": 10, "text": "プログラミングで条件分岐を行う際に使用されるキーワードは何ですか？", "options": ["loop", "function", "if", "array"], "answer": ["if"], "explanation": "if文は、条件に基づいて異なる処理を実行するために使われます。", "image": None},
-            {"id": 11, "text": "ポート番号80を使用するプロトコルは何ですか？", "options": ["HTTPS", "FTP", "SSH", "HTTP"], "answer": ["HTTP"], "explanation": "HTTPプロトコルはデフォルトでポート番号80を使用します。", "image": None},
-            {"id": 12, "text": "データを永続的に保存するためのシステムは何ですか？", "options": ["RAM", "CPU", "データベース", "キャッシュ"], "answer": ["データベース"], "explanation": "データベースは大量のデータを効率的に管理し、永続的に保存するためのシステムです。", "image": None},
-            {"id": 13, "text": "Pythonのパッケージ管理システムは何ですか？", "options": ["npm", "RubyGems", "pip", "Composer"], "answer": ["pip"], "explanation": "pipはPythonの公式パッケージ管理ツールです。", "image": None},
-            {"id": 14, "text": "JavaScriptで要素を取得するDOMメソッドの1つは何ですか？", "options": ["getElementById", "get_element_by_id", "selectElement", "queryElement"], "answer": ["getElementById"], "explanation": "JavaScriptのdocument.getElementById()は、IDを指定して要素を取得します。", "image": None},
-            {"id": 15, "text": "WebブラウザでHTML、CSS、JavaScriptを実行するものは何ですか？", "options": ["サーバー", "インタープリタ", "レンダリングエンジン", "コンパイラ"], "answer": ["レンダリングエンジン"], "explanation": "Webブラウザ内のレンダリングエンジンがこれらのファイルを解析し、表示します。", "image": None}
-        ]
-        for data in questions_data:
+    questions_data = [
+        {"id": 1, "text": "日本の首都はどこですか？", "options": ["東京", "大阪", "京都", "札幌"], "answer": ["東京"], "explanation": "東京は日本の政治、経済、文化の中心地です。", "image": None},
+        {"id": 2, "text": "Pythonの主要なWebフレームワークはFlaskと何ですか？", "options": ["Node.js", "Django", "Ruby on Rails", "PHP"], "answer": ["Django"], "explanation": "Djangoは、Pythonのもう一つのフルスタックなWebフレームワークです。", "image": "question_images/image_e0a79a.jpg"},
+        {"id": 3, "text": "HTMLは何の略ですか？", "options": ["High-Tech Markup Language", "HyperText Markup Language", "Home Tool Markup Language", "Hyperlink and Text Markup Language"], "answer": ["HyperText Markup Language"], "explanation": "HTMLはWebページの構造を記述するための言語です。", "image": None},
+        {"id": 4, "text": "TCP/IPモデルで、HTTPプロトコルが動作するのはどの層ですか？", "options": ["ネットワーク層", "トランスポート層", "アプリケーション層", "データリンク層"], "answer": ["アプリケーション層"], "explanation": "HTTPはTCP/IPの最上位層であるアプリケーション層で動作します。", "image": None},
+        {"id": 5, "text": "MACアドレスは何ビットで構成されますか？", "options": ["16ビット", "32ビット", "48ビット", "64ビット"], "answer": ["48ビット"], "explanation": "MACアドレスは、ネットワークインターフェースに割り当てられる物理アドレスで、48ビット（6バイト）です。", "image": None},
+        {"id": 6, "text": "Webページのスタイルを指定する言語は何ですか？", "options": ["HTML", "JavaScript", "CSS", "Python"], "answer": ["CSS"], "explanation": "CSS（Cascading Style Sheets）はWebページのスタイルを指定するための言語です。", "image": None},
+        {"id": 7, "text": "HTTPステータスコード200は何を意味しますか？", "options": ["リクエストエラー", "サーバーエラー", "成功", "リダイレクト"], "answer": ["成功"], "explanation": "HTTPステータスコード200は「OK」を意味し、リクエストが成功したことを示します。", "image": None},
+        {"id": 8, "text": "Gitで変更を記録するコマンドは何ですか？", "options": ["git push", "git pull", "git commit", "git clone"], "answer": ["git commit"], "explanation": "git commitは、ローカルリポジトリに変更を記録するために使われます。", "image": None},
+        {"id": 9, "text": "データベースにおける「行」の別名は何ですか？", "options": ["カラム", "テーブル", "レコード", "フィールド"], "answer": ["レコード"], "explanation": "データベースのテーブルにおける行はレコード、列はフィールド（またはカラム）と呼ばれます。", "image": None},
+        {"id": 10, "text": "プログラミングで条件分岐を行う際に使用されるキーワードは何ですか？", "options": ["loop", "function", "if", "array"], "answer": ["if"], "explanation": "if文は、条件に基づいて異なる処理を実行するために使われます。", "image": None},
+        {"id": 11, "text": "ポート番号80を使用するプロトコルは何ですか？", "options": ["HTTPS", "FTP", "SSH", "HTTP"], "answer": ["HTTP"], "explanation": "HTTPプロトコルはデフォルトでポート番号80を使用します。", "image": None},
+        {"id": 12, "text": "データを永続的に保存するためのシステムは何ですか？", "options": ["RAM", "CPU", "データベース", "キャッシュ"], "answer": ["データベース"], "explanation": "データベースは大量のデータを効率的に管理し、永続的に保存するためのシステムです。", "image": None},
+        {"id": 13, "text": "Pythonのパッケージ管理システムは何ですか？", "options": ["npm", "RubyGems", "pip", "Composer"], "answer": ["pip"], "explanation": "pipはPythonの公式パッケージ管理ツールです。", "image": None},
+        {"id": 14, "text": "JavaScriptで要素を取得するDOMメソッドの1つは何ですか？", "options": ["getElementById", "get_element_by_id", "selectElement", "queryElement"], "answer": ["getElementById"], "explanation": "JavaScriptのdocument.getElementById()は、IDを指定して要素を取得します。", "image": None},
+        {"id": 15, "text": "WebブラウザでHTML、CSS、JavaScriptを実行するものは何ですか？", "options": ["サーバー", "インタープリタ", "レンダリングエンジン", "コンパイラ"], "answer": ["レンダリングエンジン"], "explanation": "Webブラウザ内のレンダリングエンジンがこれらのファイルを解析し、表示します。", "image": None},
+        {"id": 16, "text": "メッシは何人？", "options": ["ブラジル", "アルゼンチン", "エクアドル", "パラグアイ"], "answer": ["アルゼンチン"], "explanation": "メッシは凄い選手だね。", "image": None}
+    ]
+    # --- ステップ1: 削除処理 ---
+    # `questions_data` に含まれる問題IDのセットを作成
+    source_ids = {data['id'] for data in questions_data}
+    
+    # データベースに存在するすべての問題IDのセットを作成
+    db_ids = {q.id for q in Question.query.with_entities(Question.id).all()}
+    
+    # データベースには存在するが、ソースリストには存在しないIDを特定
+    ids_to_delete = db_ids - source_ids
+    
+    if ids_to_delete:
+        # 削除対象の問題に紐づく、ユーザーの解答履歴とチェック履歴を先に削除
+        UserAnswer.query.filter(UserAnswer.question_id.in_(ids_to_delete)).delete(synchronize_session=False)
+        UserCheck.query.filter(UserCheck.question_id.in_(ids_to_delete)).delete(synchronize_session=False)
+        
+        # 該当の問題を削除
+        Question.query.filter(Question.id.in_(ids_to_delete)).delete(synchronize_session=False)
+        print(f"INFO: Deleted {len(ids_to_delete)} questions that are no longer in the seed data.")
+
+    # --- ステップ2: 追加・更新処理 ---
+    for data in questions_data:
+        question = Question.query.get(data['id'])
+        if question:
+            # 既に問題が存在する場合、内容を更新
+            question.question_text = data['text']
+            question.options = data['options']
+            question.correct_answer = data['answer']
+            question.explanation = data['explanation']
+            question.image_filename = data['image']
+        else:
+            # 問題が存在しない場合、新しく作成
             question = Question(
-                id=data.get('id'), 
-                question_text=data.get('text'), 
-                options=data.get('options'), 
-                correct_answer=data.get('answer'),
-                explanation=data.get('explanation'), 
-                image_filename=data.get('image')
+                id=data['id'],
+                question_text=data['text'],
+                options=data['options'],
+                correct_answer=data['answer'],
+                explanation=data['explanation'],
+                image_filename=data['image']
             )
             db.session.add(question)
-        print('INFO: Initial question data loaded.')
+
     db.session.commit()
+    print('INFO: Question data has been synced with the database.')
 
 @app.cli.command("seed-db")
 def seed_db_command():
     seed_initial_data()
-    print("Database seeded with questions.")
+    print("Database synced with questions.")
 
 @app.cli.command("create-admin")
 def create_admin_command():
