@@ -124,9 +124,7 @@ def seed_initial_data():
         {"id": 11, "text": "ポート番号80を使用するプロトコルは何ですか？", "options": ["HTTPS", "FTP", "SSH", "HTTP"], "answer": ["HTTP"], "explanation": "HTTPプロトコルはデフォルトでポート番号80を使用します。", "image": None},
         {"id": 12, "text": "データを永続的に保存するためのシステムは何ですか？", "options": ["RAM", "CPU", "データベース", "キャッシュ"], "answer": ["データベース"], "explanation": "データベースは大量のデータを効率的に管理し、永続的に保存するためのシステムです。", "image": None},
         {"id": 13, "text": "Pythonのパッケージ管理システムは何ですか？", "options": ["npm", "RubyGems", "pip", "Composer"], "answer": ["pip"], "explanation": "pipはPythonの公式パッケージ管理ツールです。", "image": None},
-        {"id": 14, "text": "JavaScriptで要素を取得するDOMメソッドの1つは何ですか？", "options": ["getElementById", "get_element_by_id", "selectElement", "queryElement"], "answer": ["getElementById"], "explanation": "JavaScriptのdocument.getElementById()は、IDを指定して要素を取得します。", "image": None},
-        {"id": 15, "text": "WebブラウザでHTML、CSS、JavaScriptを実行するものは何ですか？", "options": ["サーバー", "インタープリタ", "レンダリングエンジン", "コンパイラ"], "answer": ["レンダリングエンジン"], "explanation": "Webブラウザ内のレンダリングエンジンがこれらのファイルを解析し、表示します。", "image": None},
-        {"id": 16, "text": "メッシは何人？", "options": ["ブラジル", "アルゼンチン", "エクアドル", "パラグアイ"], "answer": ["アルゼンチン"], "explanation": "メッシは凄い選手だね。", "image": None}
+        {"id": 14, "text": "メッシは何人？", "options": ["ブラジル", "アルゼンチン", "エクアドル", "パラグアイ"], "answer": ["アルゼンチン"], "explanation": "メッシは凄い選手だね。", "image": None}
     ]
     # --- ステップ1: 削除処理 ---
     # `questions_data` に含まれる問題IDのセットを作成
