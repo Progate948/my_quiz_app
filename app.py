@@ -330,6 +330,7 @@ def ranking():
     ).join(
         UserAnswer, User.id == UserAnswer.user_id
     ).filter(
+        User.is_admin == False,
         UserAnswer.timestamp >= start_date
     ).group_by(
         User.id
