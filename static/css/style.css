@@ -404,26 +404,25 @@ form button[type="submit"] { display: block; width: 100%; margin-top: 20px; padd
 /* 【第2段階】画面幅が480px以下のデバイス（特に狭いスマホ）向け */
 @media (max-width: 480px) {
     .main-header {
-        height: auto; /* 高さを自動調整に戻します */
-        min-height: 65px; /* PC版のヘッダーの高さ(65px)を最低限確保します */
-        padding-top: 10px;
-        padding-bottom: 10px;
-        width: 100%;
-        box-sizing: border-box;
+        /* 中身が2段になるため、高さを自動調整 */
+        height: auto;
+        padding: 15px; /* 上下左右に均等な余白を持たせる */
     }
     .header-content {
+        /* 中身を縦に並べる */
         flex-direction: column;
-        justify-content: space-between;
-        align-items: center; 
-        gap: 8px;
-        height: auto; /* ★★★ この一行が決定打です ★★★ */
-        max-width: none;
+        align-items: center;
+        gap: 10px; /* ロゴとボタンの間の隙間を少し広げる */
+
+        /* ★★★ 重要：高さの固定を解除する ★★★ */
+        height: auto;
     }
     .header-logo {
         font-size: 1.4rem;
+        white-space: nowrap; /* 念のため改行禁止 */
     }
     .btn-header-login, .btn-header-register {
-        padding: 5px 8px;   /* ボタンの余白を詰める */
-        font-size: 0.75rem; /* 文字をさらに小さくする */
+        padding: 5px 8px;
+        font-size: 0.75rem;
     }
 }
