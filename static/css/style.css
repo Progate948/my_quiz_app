@@ -41,21 +41,22 @@ html, body {
 .main-header {
     background-color: var(--theme-surface);
     border-bottom: 1px solid var(--theme-border);
-    padding: 0 25px;
+    padding: 0 25px; /* ヘッダーの内側に左右の余白を作る */
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     position: sticky;
     top: 0;
     z-index: 1000;
     height: 65px;
+    box-sizing: border-box; /* paddingを含めて高さを65pxに保つ */
 }
 .header-content {
     display: flex;
-    justify-content: center; 
+    justify-content: space-between; /* 子要素を両端に配置 */
     align-items: center;
-    max-width: 1200px;
-    margin: 0 auto;
-    position: relative; 
-    height: 100%; /* ← ★★★ これを追加 ★★★ */
+    width: 100%; /* 親要素(main-header)の幅いっぱいに広がる */
+    max-width: 1200px; /* ただし最大幅は1200pxまで */
+    height: 100%;
+    margin: 0 auto; /* コンテンツ全体を中央に配置 */
 }
 .header-logo {
     font-family: 'Montserrat', sans-serif;
@@ -345,7 +346,7 @@ form button[type="submit"] { display: block; width: 100%; margin-top: 20px; padd
 
 /* --- ↓↓↓レスポンシブ対応コード（最終FIX版）↓↓↓ --- */
 
-/* 【第1段階】画面幅が768px以下のデバイス（タブレットなど）向け */
+/* 【最終FIX版】画面幅768px以下の全デバイスに適用 */
 @media (max-width: 768px) {
     /* コンテナと余白 */
     .container {
@@ -354,31 +355,29 @@ form button[type="submit"] { display: block; width: 100%; margin-top: 20px; padd
         width: 95%;
     }
 
-    /* ヘッダー */
+    /* ヘッダー【修正】 */
     .main-header {
-        padding: 0 15px;
-        /* ★追加：ヘッダーの幅を画面に合わせ、paddingを内側に含める */
-        width: 100%;
-        box-sizing: border-box;
-    }
-    .header-content {
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
+        height: 55px; /* スマホでは高さを少し狭くする */
+        padding: 0 15px; /* 内側の余白を少し詰める */
     }
     .header-logo {
-        font-size: 1.3rem;
+        font-size: 1.1rem; /* ロゴの文字を小さく */
         white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis; /* はみ出す文字は「...」で省略 */
+        max-width: 60%;
     }
     .header-nav {
         position: static;
     }
-    .btn-header-login, .btn-header-register {
-        padding: 6px 12px;
-        font-size: 0.9rem;
+    .btn-header-login, .btn-header-register, .menu-toggle {
+        padding: 5px 10px;
+        font-size: 0.8rem;
         white-space: nowrap;
     }
-
+    .menu-toggle {
+        font-size: 0.9rem;
+    }
     /* 文字サイズ */
     h1 { font-size: 1.8rem; }
     h2 { font-size: 1.5rem; }
@@ -398,31 +397,5 @@ form button[type="submit"] { display: block; width: 100%; margin-top: 20px; padd
     }
     .table-responsive .btn-outline-primary {
          margin-right: 0 !important;
-    }
-}
-
-/* 【第2段階】画面幅が480px以下のデバイス（特に狭いスマホ）向け */
-@media (max-width: 480px) {
-    .main-header {
-        /* 中身が2段になるため、高さを自動調整 */
-        height: auto;
-        padding: 15px; /* 上下左右に均等な余白を持たせる */
-    }
-    .header-content {
-        /* 中身を縦に並べる */
-        flex-direction: column;
-        align-items: center;
-        gap: 10px; /* ロゴとボタンの間の隙間を少し広げる */
-
-        /* ★★★ 重要：高さの固定を解除する ★★★ */
-        height: auto;
-    }
-    .header-logo {
-        font-size: 1.4rem;
-        white-space: nowrap; /* 念のため改行禁止 */
-    }
-    .btn-header-login, .btn-header-register {
-        padding: 5px 8px;
-        font-size: 0.75rem;
     }
 }
