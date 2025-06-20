@@ -51,7 +51,7 @@ html, body {
 }
 .header-content {
     display: flex;
-    justify-content: space-between; /* 子要素を両端に配置 */
+    justify-content: center; /* 子要素を両端に配置 */
     align-items: center;
     width: 100%; /* 親要素(main-header)の幅いっぱいに広がる */
     max-width: 1200px; /* ただし最大幅は1200pxまで */
@@ -359,6 +359,12 @@ form button[type="submit"] { display: block; width: 100%; margin-top: 20px; padd
     .main-header {
         height: 55px; /* スマホでは高さを少し狭くする */
         padding: 0 15px; /* 内側の余白を少し詰める */
+    }
+    .header-content {
+        justify-content: space-between; /* ← スマホでは両端揃えにする */
+        align-items: center;
+        width: 100%;
+        height: 100%;
     }
     .header-logo {
         font-size: 1.1rem; /* ロゴの文字を小さく */
