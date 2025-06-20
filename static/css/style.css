@@ -51,7 +51,7 @@ html, body {
 }
 .header-content {
     display: flex;
-    justify-content: space-between; /* 子要素を両端に配置 */
+    justify-content: center; /* 子要素を両端に配置 */
     align-items: center;
     width: 100%; /* 親要素(main-header)の幅いっぱいに広がる */
     max-width: 1200px; /* ただし最大幅は1200pxまで */
@@ -60,7 +60,7 @@ html, body {
 }
 .header-logo {
     font-family: 'Montserrat', sans-serif;
-    font-size: 1.6rem;
+    font-size: 1.7rem;
     font-weight: 700;
     color: var(--theme-text);
     text-decoration: none;
