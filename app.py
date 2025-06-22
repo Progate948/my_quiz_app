@@ -17,11 +17,28 @@ from models import db, User, Question, UserAnswer, UserCheck
 from admin import admin_bp
 from admin.routes import setup_admin_upload_folder
 from forms import RegistrationForm, LoginForm, QuestionForm, EditProfileForm
+from flask_mail import Mail, Message
+from itsdangerous import URLSafeTimedSerializer
+from threading import Thread
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'json_serializer': lambda obj: json.dumps(obj, ensure_ascii=False)
 }
+# --- Mail Configuration ---
+# ★★★★★重要★★★★★
+# これらの値は、Renderの「Environment」ページで環境変数として設定してください。
+# セキュリティのため、コード内に直接書き込まないでください。
+app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
+app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME') # 例: 'your-email@gmail.com'
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD') # 例: Googleのアプリパスワードなど
+app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER', app.config['MAIL_USERNAME'])
+
 app.wsgi_app = WhiteNoise(app.wsgi_app, root='static/')
 # --- Configuration ---
 instance_folder_path = os.path.join(
@@ -62,6 +79,7 @@ login_manager.login_view = 'login'
 login_manager.login_message = "このページにアクセスするにはログインが必要です。"
 login_manager.login_message_category = "info"
 
+mail = Mail(app)
 # --- Blueprint Registration ---
 app.register_blueprint(admin_bp)
 
@@ -112,6 +130,39 @@ def get_dynamic_ranges(range_size=5):
                 ranges[range_key] = {'name': range_name}
             start_id_loop += range_size
     return ranges
+
+def generate_confirmation_token(email):
+    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    return serializer.dumps(email, salt=app.config.get('SECURITY_PASSWORD_SALT', 'my-precious-salt'))
+
+def confirm_token(token, expiration=3600): # 有効期限は1時間
+    serializer = URLSafeTimedSerializer(app.config['SECRET_KEY'])
+    try:
+        email = serializer.loads(
+            token,
+            salt=app.config.get('SECURITY_PASSWORD_SALT', 'my-precious-salt'),
+            max_age=expiration
+        )
+    except Exception:
+        return False
+    return email
+
+#非同期でメールを送信するための関数
+def send_async_email(app, msg):
+    with app.app_context():
+        mail.send(msg)
+
+def send_email(to, subject, template):
+    msg = Message(
+        subject,
+        recipients=[to],
+        html=template,
+        sender=app.config['MAIL_DEFAULT_SENDER']
+    )
+    # スレッドを使用して非同期にメールを送信し、レスポンスをブロックしないようにする
+    thr = Thread(target=send_async_email, args=[app, msg])
+    thr.start()
+    return thr
 
 # --- Constants ---
 REVIEW_MODE_KEY = 'review_mode'
@@ -214,9 +265,37 @@ def register():
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
-        flash('登録が完了しました。ログインしてください。', 'success')
+        # ▼▼▼ 確認メール送信処理を追加 ▼▼▼
+        token = generate_confirmation_token(user.email)
+        confirm_url = url_for('confirm_email', token=token, _external=True)
+        html = render_template('email/confirm.html', confirm_url=confirm_url)
+        send_email(user.email, '【CCNP ENCOR】アカウントの有効化をお願いします', html)
+        
+        # ログインさせずに、メッセージを表示してログインページへ
+        flash('ご登録ありがとうございます。アカウントを有効化するためのメールを送信しましたので、ご確認ください。', 'success')
         return redirect(url_for('login'))
     return render_template('register.html', title='ユーザー登録', form=form)
+
+@app.route('/confirm/<token>')
+def confirm_email(token):
+    try:
+        email = confirm_token(token)
+    except:
+        flash('確認用リンクが無効か、期限切れです。', 'danger')
+        return redirect(url_for('login'))
+    
+    user = User.query.filter_by(email=email).first_or_404()
+    
+    if user.is_confirmed:
+        flash('アカウントは既に有効化されています。ログインしてください。', 'success')
+    else:
+        user.is_confirmed = True
+        user.confirmed_on = datetime.datetime.now()
+        db.session.add(user)
+        db.session.commit()
+        flash('アカウントが有効化されました！ログインしてください。', 'success')
+        
+    return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -226,9 +305,19 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
-        if user is None or not user.check_password(form.password.data):
-            flash('ユーザー名またはパスワードが無効です。', 'danger')
-            return redirect(url_for('login'))
+        # ▼▼▼ ユーザー存在チェックの後に、有効化チェックを追加 ▼▼▼
+        if user:
+            if not user.is_confirmed:
+                flash('アカウントが有効化されていません。お送りしたメールをご確認ください。', 'warning')
+                return redirect(url_for('login'))
+            
+            if not user.check_password(form.password.data):
+                flash('ユーザー名またはパスワードが無効です。', 'danger')
+                return redirect(url_for('login'))
+        else:
+             flash('ユーザー名またはパスワードが無効です。', 'danger')
+             return redirect(url_for('login'))
+
         login_user(user, remember=form.remember_me.data)
         session.pop('user_id', None)
         flash(f'{user.username}さん、ようこそ！', 'success')
@@ -856,6 +945,44 @@ def review_all_checked(check_type):
 
     return redirect(url_for('show_question', question_id=checked_question_ids[0]))
 
+@app.route('/reset_password_request', methods=['GET', 'POST'])
+def reset_password_request():
+    if current_user.is_authenticated:
+        return redirect(url_for('quiz_range_select'))
+    form = PasswordResetRequestForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(email=form.email.data).first()
+        if user:
+            token = generate_confirmation_token(user.email) # 確認用と同じトークン生成ロジックを再利用
+            reset_url = url_for('reset_password', token=token, _external=True)
+            html = render_template('email/reset.html', reset_url=reset_url)
+            send_email(user.email, '【CCNP ENCOR】パスワードの再設定', html)
+        
+        flash('パスワード再設定のご案内をメールで送信しました。', 'info')
+        return redirect(url_for('login'))
+    return render_template('reset_password_request.html', title='パスワード再設定', form=form)
+
+
+@app.route('/reset_password/<token>', methods=['GET', 'POST'])
+def reset_password(token):
+    if current_user.is_authenticated:
+        return redirect(url_for('quiz_range_select'))
+    try:
+        email = confirm_token(token) # トークンを検証
+    except:
+        flash('再設定用のリンクが無効か、期限切れです。', 'danger')
+        return redirect(url_for('login'))
+
+    user = User.query.filter_by(email=email).first_or_404()
+    
+    form = PasswordResetForm()
+    if form.validate_on_submit():
+        user.set_password(form.password.data)
+        db.session.commit()
+        flash('パスワードが更新されました。新しいパスワードでログインしてください。', 'success')
+        return redirect(url_for('login'))
+    
+    return render_template('reset_password.html', title='パスワードの再設定', form=form)
 
 if __name__ == '__main__':
     app.run(debug=True)

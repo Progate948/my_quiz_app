@@ -1,4 +1,4 @@
-    {% extends "base.html" %}
+{% extends "base.html" %}
     {# {% import "bootstrap/wtf.html" as wtf %} ← この行を削除またはコメントアウト #}
     {% from "bootstrap5/form.html" import render_form %} {# render_formをインポート #}
     
@@ -8,7 +8,10 @@
     <div class="container">
         <h1>ログイン</h1>
         {{ render_form(form) }} {# フォーム全体をレンダリング #}
-        <p>アカウントをお持ちでないですか？ <a href="{{ url_for('register') }}">登録はこちら</a></p>
+
+        <div class="text-center mt-3">
+            <a href="{{ url_for('reset_password_request') }}">パスワードを忘れた場合</a>
+        </div>
+        <p class="text-center mt-2">アカウントをお持ちでないですか？ <a href="{{ url_for('register') }}">登録はこちら</a></p>
     </div>
     {% endblock %}
-    

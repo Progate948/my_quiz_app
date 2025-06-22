@@ -12,4 +12,6 @@ instance/
 # IDE / Editor specific
 .vscode/
 .idea/
-        
+
+# Environment variables
+.env

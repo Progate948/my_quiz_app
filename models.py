@@ -13,6 +13,8 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256))
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
+    is_confirmed = db.Column(db.Boolean, nullable=False, default=False)
+    confirmed_on = db.Column(db.DateTime, nullable=True)    
     answers = db.relationship('UserAnswer', backref='user', lazy='dynamic')
     checks = db.relationship('UserCheck', backref='user', lazy='dynamic')
 

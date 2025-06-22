@@ -71,3 +71,13 @@ class EditProfileForm(FlaskForm):
             user = User.query.filter_by(email=email.data).first()
             if user:
                 raise ValidationError('このメールアドレスは既に使用されています。')
+
+class PasswordResetRequestForm(FlaskForm):
+    email = StringField('メールアドレス', validators=[DataRequired(), Email()])
+    submit = SubmitField('パスワードリセット用のメールを送信')
+
+class PasswordResetForm(FlaskForm):
+    password = PasswordField('新しいパスワード', validators=[DataRequired()])
+    password2 = PasswordField(
+        '新しいパスワード（確認）', validators=[DataRequired(), EqualTo('password')])
+    submit = SubmitField('パスワードを再設定する')            
