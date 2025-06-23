@@ -22,11 +22,13 @@ def upgrade():
         batch_op.alter_column('options',
                existing_type=sa.TEXT(),
                type_=sa.JSON(),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='options::json')
         batch_op.alter_column('correct_answer',
                existing_type=sa.TEXT(),
                type_=sa.JSON(),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='correct_answer::json')
 
     with op.batch_alter_table('user', schema=None) as batch_op:
         batch_op.add_column(sa.Column('is_confirmed', sa.Boolean(), server_default='0', nullable=False))
@@ -36,7 +38,8 @@ def upgrade():
         batch_op.alter_column('user_selected_option',
                existing_type=sa.TEXT(),
                type_=sa.JSON(),
-               existing_nullable=False)
+               existing_nullable=False,
+               postgresql_using='user_selected_option::json')
 
     # ### end Alembic commands ###
 
