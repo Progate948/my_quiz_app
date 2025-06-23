@@ -361,15 +361,20 @@ def mypage():
         func.max(UserAnswer.timestamp).label('max_timestamp')
     ).filter_by(user_id=current_user.id).group_by(UserAnswer.question_id).subquery()
 
-    latest_answers = db.session.query(UserAnswer).join(
+    page = request.args.get('page', 1, type=int) # URLからページ番号を取得（デフォルトは1）
+    per_page = 10 # 1ページあたりの表示件数
+    
+    latest_answers_query = db.session.query(UserAnswer).join(
         subquery,
         db.and_(
             UserAnswer.question_id == subquery.c.question_id,
             UserAnswer.timestamp == subquery.c.max_timestamp,
             UserAnswer.user_id == current_user.id
         )
-    ).order_by(UserAnswer.timestamp.desc()).all()
+    ).order_by(UserAnswer.timestamp.desc())
 
+    pagination = latest_answers_query.paginate(page=page, per_page=per_page, error_out=False)
+    answer_history = pagination.items # 現在のページに表示するアイテムリスト
 
     return render_template(
         'mypage.html',
@@ -377,7 +382,8 @@ def mypage():
         total_answered=total_answered,
         correct_answered=correct_answered,
         average_accuracy=average_accuracy,
-        answer_history=latest_answers
+        answer_history=answer_history, # ページネーションされたリストを渡す
+        pagination=pagination # ▲▲▲【ここまで修正】▲▲▲
     )
 
 @app.route('/edit_profile', methods=['GET', 'POST'])
@@ -398,7 +404,6 @@ def edit_profile():
     return render_template('edit_profile.html', title='プロフィール編集', form=form)
 
 
-# ★★★ 新規追加: ランキング表示ルート ★★★
 @app.route('/ranking')
 @login_required
 def ranking():
@@ -440,13 +445,14 @@ def ranking():
         User.id
     ).order_by(
         func.count(UserAnswer.id).desc()
-    ).limit(20).all()  # 上位20件まで表示
+    ).limit(100).all()  # .paginate() から .limit(100).all() に戻す
 
     return render_template(
         'ranking.html',
         title=title,
         ranking_data=ranking_data,
         current_period=period
+        # pagination=pagination は削除
     )
 
 # --- ★★★ 新規追加: 試験モード情報ページ表示ルート ★★★ ---

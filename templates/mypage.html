@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% from 'bootstrap5/pagination.html' import render_pagination %}
 {% block title %}マイページ - {{ super() }}{% endblock %}
 
 {% block content %}
@@ -73,6 +73,11 @@
                         </tbody>
                     </table>
                 </div>
+                {# ▼▼▼【ここに追加】ページネーションコントロール ▼▼▼ #}
+                <div class="d-flex justify-content-center mt-4">
+                    {{ render_pagination(pagination) }}
+                </div>
+                {# ▲▲▲ ここまで ▲▲▲ #}
             {% else %}
                 <p class="text-center text-muted">まだ学習履歴はありません。</p>
             {% endif %}
