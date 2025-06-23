@@ -6,6 +6,7 @@ from wtforms import StringField, TextAreaField, SubmitField, FileField, SelectMu
 from wtforms.validators import DataRequired, Optional # Optionalバリデータを追加
 from flask_wtf.file import FileAllowed, FileRequired # FileRequiredは新規追加時など
 from flask_login import current_user
+from flask_wtf.file import FileField, FileRequired, FileAllowed
 # (以降のフォームクラス定義は変更なし)
 
 class RegistrationForm(FlaskForm):
@@ -50,6 +51,13 @@ class QuestionForm(FlaskForm):
                       ])
     submit = SubmitField('保存')
 
+class QuestionImportForm(FlaskForm):
+    csv_file = FileField('CSVファイル', validators=[
+        FileRequired(),
+        FileAllowed(['csv'], 'CSVファイルのみアップロード可能です！')
+    ])
+    submit = SubmitField('インポート実行')
+
 class EditProfileForm(FlaskForm):
     username = StringField('ユーザー名', validators=[DataRequired()])
     email = StringField('メールアドレス', validators=[DataRequired(), Email()])
@@ -80,4 +88,4 @@ class PasswordResetForm(FlaskForm):
     password = PasswordField('新しいパスワード', validators=[DataRequired()])
     password2 = PasswordField(
         '新しいパスワード（確認）', validators=[DataRequired(), EqualTo('password')])
-    submit = SubmitField('パスワードを再設定する')            
+    submit = SubmitField('パスワードを再設定する')

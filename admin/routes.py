@@ -8,6 +8,10 @@ from .decorators import admin_required
 # modelsとformsはアプリケーションルートからインポート
 from models import db, Question
 from forms import QuestionForm
+from forms import QuestionImportForm
+from models import UserAnswer, UserCheck  # 削除処理で必要
+import csv
+import io
 
 UPLOAD_FOLDER_NAME = 'question_images'
 

@@ -1,0 +1,27 @@
+{% extends 'admin_base.html' %}
+{% from 'bootstrap5/form.html' import render_form %}
+
+{% block admin_content %}
+    <h2>{{ title }}</h2>
+    <p>以下の形式で作成したCSVファイルをアップロードしてください。</p>
+    <ul>
+        <li>1行目のヘッダー: <code>id,question_text,options,correct_answers,explanation,image_filename</code></li>
+        <li>更新時は<code>id</code>列にIDを、新規追加時は<code>id</code>列を空にしてください。</li>
+        <li>文字コード: <code>UTF-8</code></li>
+        <li>複数選択肢/解答: <code>|</code>（パイプ）記号で区切る</li>
+    </ul>
+    <div class="card bg-light p-4">
+        <form method="post" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            {# formオブジェクトからファイルフィールドと送信ボタンを個別にレンダリング #}
+            {{ render_form(form) }}
+            
+            <div class="form-check my-3">
+                <input class="form-check-input" type="checkbox" name="delete_all" id="delete_all">
+                <label class="form-check-label" for="delete_all">
+                    <strong>注意:</strong> 既存の全問題を削除してからインポートする（全データを入れ替える場合）
+                </label>
+            </div>
+        </form>
+    </div>
+{% endblock %}
