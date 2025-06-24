@@ -6,10 +6,8 @@ import os
 from . import admin_bp
 from .decorators import admin_required
 # modelsとformsはアプリケーションルートからインポート
-from models import db, Question
-from forms import QuestionForm
-from forms import QuestionImportForm
-from models import UserAnswer, UserCheck  # 削除処理で必要
+from models import db, Question, UserAnswer, UserCheck # UserAnswer, UserCheckを追加
+from forms import QuestionForm, QuestionImportForm # QuestionImportFormを追加
 import csv
 import io
 
@@ -190,3 +188,70 @@ def delete_question(question_id):
         current_app.logger.error(f"Error deleting question {question_id}: {e}", exc_info=True)
 
     return redirect(url_for('admin.list_questions'))
+
+# ... delete_question 関数の下に、以下の関数をまるごと追加 ...
+
+@admin_bp.route('/question/import', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def import_questions():
+    form = QuestionImportForm()
+    if form.validate_on_submit():
+        try:
+            delete_all = request.form.get('delete_all')
+
+            if delete_all:
+                UserAnswer.query.delete()
+                UserCheck.query.delete()
+                Question.query.delete()
+                db.session.commit()
+                flash("既存の全問題データを削除しました。", "warning")
+
+            # --- ▼▼▼【ここが修正のポイントです】▼▼▼ ---
+            csv_file = form.csv_file.data
+            # 1. アップロードされたバイナリデータを、UTF-8形式のテキストに変換します
+            stream = io.TextIOWrapper(csv_file.stream, 'utf-8-sig')
+            # 2. 変換後のテキストストリームをCSVリーダーに渡します
+            reader = csv.DictReader(stream)
+            # --- ▲▲▲【ここまでが修正のポイントです】▲▲▲ ---
+
+            questions_to_add = []
+            questions_to_update_count = 0
+            
+            for row in reader:
+                options_list = [opt.strip() for opt in row['options'].split('|') if opt.strip()]
+                correct_answers_list = [ans.strip() for ans in row['correct_answers'].split('|') if ans.strip()]
+                question_id = row.get('id')
+
+                if question_id and Question.query.get(question_id):
+                    q = Question.query.get(question_id)
+                    q.question_text = row['question_text']
+                    q.options = options_list
+                    q.correct_answer = correct_answers_list
+                    q.explanation = row['explanation']
+                    q.image_filename = row['image_filename'] or None
+                    questions_to_update_count += 1
+                else:
+                    new_question = Question(
+                        question_text=row['question_text'],
+                        options=options_list,
+                        correct_answer=correct_answers_list,
+                        explanation=row['explanation'],
+                        image_filename=row['image_filename'] or None
+                    )
+                    questions_to_add.append(new_question)
+
+            if questions_to_add:
+                db.session.add_all(questions_to_add)
+            
+            db.session.commit()
+            flash(f"{len(questions_to_add)}件の問題を新規追加し、{questions_to_update_count}件の問題を更新しました。", "success")
+        
+        except Exception as e:
+            db.session.rollback()
+            flash(f"インポート中にエラーが発生しました: {e}", "danger")
+            current_app.logger.error(f"Error importing questions: {e}", exc_info=True)
+        
+        return redirect(url_for('admin.import_questions'))
+
+    return render_template('admin_question_import.html', title='問題の一括インポート', form=form)
