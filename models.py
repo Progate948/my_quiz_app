@@ -35,8 +35,18 @@ class Question(db.Model):
     correct_answer = db.Column(JSON, nullable=False)
     explanation = db.Column(db.Text, nullable=True)
     image_filename = db.Column(db.String(255), nullable=True)
-    user_answers = db.relationship('UserAnswer', backref='question_detail', lazy='dynamic')
-    user_checks = db.relationship('UserCheck', backref='question_detail', lazy='dynamic')
+    user_answers = db.relationship(
+        'UserAnswer', 
+        backref='question_detail', 
+        lazy='dynamic',
+        cascade='all, delete-orphan'
+    )
+    user_checks = db.relationship(
+        'UserCheck', 
+        backref='question_detail', 
+        lazy='dynamic',
+        cascade='all, delete-orphan'
+    )
 
     def __repr__(self):
         return f'<Question {self.id}>'
