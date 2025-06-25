@@ -10,6 +10,7 @@ from models import db, Question, UserAnswer, UserCheck, ExamResult, User
 from forms import QuestionForm, QuestionImportForm # QuestionImportFormを追加
 import csv
 import io
+from sqlalchemy import text
 
 UPLOAD_FOLDER_NAME = 'question_images'
 
@@ -204,7 +205,16 @@ def import_questions():
                 UserAnswer.query.delete()
                 UserCheck.query.delete()
                 Question.query.delete()
-                db.session.commit()
+                # 'question'テーブルのIDシーケンスをリセットするSQLを実行
+                # このSQLはPostgreSQLに特有のものです
+                try:
+                    db.session.execute(text('TRUNCATE TABLE question RESTART IDENTITY CASCADE;'))
+                    db.session.commit()
+                except Exception:
+                    # SQLiteなど、TRUNCATEをサポートしないDBの場合は通常のDELETEに戻す
+                    db.session.rollback()
+                    Question.query.delete()
+                    db.session.commit()
                 flash("既存の全問題データを削除しました。", "warning")
 
             # --- ▼▼▼【ここが修正のポイントです】▼▼▼ ---
