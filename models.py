@@ -35,6 +35,7 @@ class Question(db.Model):
     options = db.Column(JSON, nullable=False)
     correct_answer = db.Column(JSON, nullable=False)
     explanation = db.Column(db.Text, nullable=True)
+    question_type = db.Column(db.String(50), nullable=False, default='multiple_choice') # 'multiple_choice' or 'drag_and_drop'
     image_filename = db.Column(db.String(255), nullable=True)
     user_answers = db.relationship(
         'UserAnswer', 
