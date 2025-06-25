@@ -4,13 +4,42 @@
 
 {% block content %}
 <div class="container">
-    <div class="mode-section text-center">
+    <div class="text-center">
         <h1>試験モード</h1>
-        <p class="lead my-4">全範囲からランダムに20問が出題されます。(制限時間: 20分)</p>
-        <form action="{{ url_for('start_exam') }}" method="post">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <button type="submit" class="btn btn-warning btn-lg">試験モードを開始</button>
-        </form>
+        <p class="lead my-4">全範囲からランダムに20問が出題されます。(制限時間: 20分)<br>モードを選択して開始してください。</p>
     </div>
+
+    {# ▼▼▼【ここからが修正箇所】▼▼▼ #}
+    <div class="row justify-content-center mt-4">
+
+        <div class="col-md-5 mb-4">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">練習モード</h5>
+                    <p class="card-text">何度でも気軽に挑戦できます。</p>
+                    <div class="mt-auto text-center">
+                        <form action="{{ url_for('start_exam') }}" method="post">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-primary">練習モードで開始</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-5 mb-4">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">本番モード</h5>
+                    <p class="card-text">確認テストで使用します。</p>
+                    <div class="mt-auto text-center">
+                        <a href="{{ url_for('start_proctored_exam_request') }}" class="btn btn-danger">本番モードで開始</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    {# ▲▲▲【ここまでが修正箇所】▲▲▲ #}
 </div>
 {% endblock %}

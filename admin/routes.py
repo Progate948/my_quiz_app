@@ -6,7 +6,7 @@ import os
 from . import admin_bp
 from .decorators import admin_required
 # modelsとformsはアプリケーションルートからインポート
-from models import db, Question, UserAnswer, UserCheck # UserAnswer, UserCheckを追加
+from models import db, Question, UserAnswer, UserCheck, ExamResult, User
 from forms import QuestionForm, QuestionImportForm # QuestionImportFormを追加
 import csv
 import io
@@ -255,3 +255,22 @@ def import_questions():
         return redirect(url_for('admin.import_questions'))
 
     return render_template('admin_question_import.html', title='問題の一括インポート', form=form)
+
+# 試験結果の一覧を表示するルート
+@admin_bp.route('/exam_results')
+@login_required
+@admin_required
+def list_exam_results():
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+    # User情報も一緒に取得するためにjoinする
+    results_pagination = ExamResult.query.join(User).order_by(ExamResult.submitted_at.desc()).paginate(page=page, per_page=per_page, error_out=False)
+    return render_template('admin_exam_results.html', title='本番試験結果一覧', results_pagination=results_pagination)
+
+# 個別の試験結果詳細を表示するルート
+@admin_bp.route('/exam_result/<int:result_id>')
+@login_required
+@admin_required
+def view_exam_result(result_id):
+    result = ExamResult.query.get_or_404(result_id)
+    return render_template('admin_exam_result_detail.html', title=f"試験結果詳細 (User: {result.user.username})", result=result)

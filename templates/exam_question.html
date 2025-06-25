@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}試験モード - {{ q_index + 1 }}問目{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="progress-info mt-3 d-flex justify-content-between">
+        <span>{{ q_index + 1 }}問目 / {{ total_questions }}問中</span>
+        <span>残り時間: <span id="timer-display">20:00</span></span>
+    </div>
+
+    {# 問題番号ナビゲーション #}
+    <div class="my-3">
+        {% for i in range(total_questions) %}
+            {# --- ①ハイライトの不具合修正 --- #}
+            {# 解答済みかの判定を、question_idのみで行うように修正 #}
+            <a href="{{ url_for('exam_question', q_index=i) }}" 
+               class="btn btn-sm {% if i == q_index %}btn-primary{% elif all_question_ids[i]|string in answered_map %}btn-success{% else %}btn-outline-secondary{% endif %} me-1 mb-1">
+                {{ i + 1 }}
+            </a>
+            {# --- ③10問ごとの改行 --- #}
+            {% if loop.index % 10 == 0 and not loop.last %}
+                <div class="w-100 my-1"></div> {# 10個ごとに改行するためのdiv #}
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <hr>
+
+    <h1>No. {{ question.id }}</h1>
+    
+    {% if question.image_filename %}
+    <div class="question-image-container">
+        <img src="{{ url_for('static', filename=question.image_filename.replace('\\', '/')) }}" alt="問題画像" class="question-image">
+    </div>
+    {% endif %}
+
+    <p class="question-text">{{ question.question_text }}</p>
+
+    <form action="{{ url_for('exam_answer') }}" method="post" id="answer-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="q_index" value="{{ q_index }}">
+        <input type="hidden" name="question_id" value="{{ question.id }}">
+
+        <div class="options">
+            {% for option in options %}
+            <label>
+                {% if is_multi_select_question %}
+                    <input type="checkbox" name="selected_option" value="{{ option }}" {% if option in previous_answers %}checked{% endif %}>
+                {% else %}
+                    <input type="radio" name="selected_option" value="{{ option }}" {% if option in previous_answers %}checked{% endif %} required>
+                {% endif %}
+                <span>{{ option }}</span>
+            </label>
+            {% endfor %}
+        </div>
+        <button type="submit" class="btn btn-primary w-100 mt-3">
+            {% if question.id|string in answered_map %}解答を更新して次へ{% else %}解答して次へ{% endif %}
+        </button>
+    </form>
+    
+    <hr>
+
+    {# --- ②不要ボタンの削除 --- #}
+    {# ページ下部の「前の問題へ」「次の問題へ」ボタンは削除し、「試験を終了」ボタンのみ残す #}
+    <div class="text-center my-4">
+        <a href="{{ url_for('submit_exam') }}" class="btn btn-danger" onclick="return confirm('試験を終了し、採点します。よろしいですか？')">試験を終了して採点する</a>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // タイマー用のJavaScript（元のquestion.htmlからコピー＆調整）
+    const timerDisplay = document.getElementById('timer-display');
+    if (timerDisplay) {
+        const startTime = new Date('{{ session.get("exam_state", {}).get("start_time") }}');
+        const totalTimeInSeconds = 20 * 60;
+
+        const timerInterval = setInterval(updateTimer, 1000);
+
+        function updateTimer() {
+            const now = new Date();
+            const elapsedSeconds = Math.round((now - startTime) / 1000);
+            const remainingSeconds = totalTimeInSeconds - elapsedSeconds;
+
+            if (remainingSeconds <= 0) {
+                clearInterval(timerInterval);
+                alert("時間切れです！試験を終了します。");
+                window.location.href = "{{ url_for('submit_exam') }}";
+                return;
+            }
+            const minutes = Math.floor(remainingSeconds / 60);
+            const seconds = remainingSeconds % 60;
+            timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+        updateTimer();
+    }
+});
+</script>
+{% endblock %}

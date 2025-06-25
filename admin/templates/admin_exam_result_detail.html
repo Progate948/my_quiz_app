@@ -1,0 +1,30 @@
+{% extends 'admin_base.html' %}
+
+{% block admin_content %}
+    <h2>{{ title }}</h2>
+    <p>
+        <strong>受験者:</strong> {{ result.user.username }}<br>
+        <strong>受験日時:</strong> {{ result.submitted_at | to_jst_str }}<br>
+        <strong>スコア:</strong> {{ result.score }} / {{ result.total_questions }}
+    </p>
+    <hr>
+    <h3>解答の詳細</h3>
+    {% for detail in result.results_detail %}
+        <div class="card mb-3 {% if detail.is_correct %}border-success{% else %}border-danger{% endif %}">
+            <div class="card-header {% if detail.is_correct %}bg-success-subtle{% else %}bg-danger-subtle{% endif %}">
+                <strong>問題 {{ loop.index }} (ID: {{ detail.question_id }}) - {% if detail.is_correct %}正解{% else %}不正解{% endif %}</strong>
+            </div>
+            <div class="card-body">
+                <p class="question-text">{{ detail.question_text }}</p>
+                {% if detail.image_filename %}
+                    <div class="question-image-container my-3">
+                        <img src="{{ url_for('static', filename=detail.image_filename.replace('\\', '/')) }}" alt="問題画像" class="question-image">
+                    </div>
+                {% endif %}
+                <p>ユーザーの解答: <strong class="{% if not detail.is_correct %}text-danger{% endif %}">{{ detail.user_answer|join(' & ') if detail.user_answer else '無解答' }}</strong></p>
+                <p>正解: <strong class="text-success">{{ detail.correct_answer|join(' & ') }}</strong></p>
+            </div>
+        </div>
+    {% endfor %}
+    <a href="{{ url_for('admin.list_exam_results') }}" class="btn btn-secondary mt-3">結果一覧に戻る</a>
+{% endblock %}

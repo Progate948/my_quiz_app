@@ -13,7 +13,7 @@ import datetime
 from datetime import timedelta
 import pytz
 
-from models import db, User, Question, UserAnswer, UserCheck
+from models import db, User, Question, UserAnswer, UserCheck, ExamResult
 from admin import admin_bp
 from admin.routes import setup_admin_upload_folder
 from forms import RegistrationForm, LoginForm, QuestionForm, EditProfileForm
@@ -21,6 +21,8 @@ from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer
 from threading import Thread
 from dotenv import load_dotenv
+from forms import RegistrationForm, LoginForm, QuestionForm, EditProfileForm, PasswordResetRequestForm, PasswordResetForm, PasswordConfirmForm
+from flask_session import Session
 
 load_dotenv()
 
@@ -28,6 +30,12 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'json_serializer': lambda obj: json.dumps(obj, ensure_ascii=False)
 }
+# ▼▼▼サーバーサイドセッションの設定 ▼▼▼
+app.config['SESSION_TYPE'] = 'filesystem'  # セッションをファイルシステムに保存
+app.config['SESSION_PERMANENT'] = False   # ブラウザを閉じたらセッションを無効に
+app.config['SESSION_USE_SIGNER'] = True   # セッションIDを安全に署名
+app.config['PROCTORED_EXAM_PASSWORD'] = os.environ.get('PROCTORED_EXAM_PASSWORD')
+
 # --- Mail Configuration ---
 # ★★★★★重要★★★★★
 # これらの値は、Renderの「Environment」ページで環境変数として設定してください。
@@ -78,6 +86,9 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = "このページにアクセスするにはログインが必要です。"
 login_manager.login_message_category = "info"
+
+sess = Session()
+sess.init_app(app)
 
 mail = Mail(app)
 # --- Blueprint Registration ---
@@ -483,7 +494,7 @@ def start_multi_quiz():
 
 
 @app.route('/start_exam', methods=['POST'])
-@login_required # ★★★ 修正箇所 ★★★
+@login_required
 def start_exam():
     all_q_ids = [q.id for q in Question.query.with_entities(Question.id).all()]
     if len(all_q_ids) < 20:
@@ -492,27 +503,92 @@ def start_exam():
     else:
         exam_questions_ids = random.sample(all_q_ids, 20)
 
-    session.pop(REVIEW_MODE_KEY, None)
-    session.pop(REVIEW_TYPE_KEY, None)
-    session['correct_count'] = 0
-    session['total_questions_answered'] = 0
-    session['answered_question_ids'] = []
-    session['current_range_key'] = 'exam_mode'
-    session.pop('last_answer_result', None)
-    session.pop('last_user_answer', None)
-    
-    session[EXAM_MODE_KEY] = True
-    end_time = datetime.datetime.now(pytz.utc) + datetime.timedelta(minutes=20)
-    session['exam_end_time'] = end_time.isoformat()
-    session['quiz_order_ids'] = exam_questions_ids
-    session['current_question_index_in_order'] = 0
-
     if not exam_questions_ids:
         flash("試験を開始できる問題がありません。", "danger")
         return redirect(url_for('quiz_range_select'))
+
+    # --- ▼▼▼【ここからが修正箇所です】▼▼▼ ---
+
+    # 試験の状態を管理する新しいセッション構造を初期化します
+    session['exam_state'] = {
+        'question_ids': exam_questions_ids,
+        'answers': {},  # {question_id: [user_answer1, user_answer2], ...} という形式で解答を保存
+        'start_time': datetime.datetime.now(pytz.utc).isoformat()
+    }
+    
+    # 以前の不要になったセッション変数をクリアします
+    session.pop('quiz_order_ids', None)
+    session.pop('correct_count', None)
+    session.pop('total_questions_answered', None)
+    session.pop('answered_question_ids', None)
+    session.pop('current_range_key', None)
+    session.pop('last_answer_result', None)
+    session.pop('last_user_answer', None)
+    session.pop(EXAM_MODE_KEY, None) # EXAM_MODE_KEY も exam_state に統合するので不要
+    session.pop('exam_end_time', None) # start_time を使うので不要
+
+    # 試験の最初の問題（インデックス0）へリダイレクトします
+    # リダイレクト先が 'show_question' から新しい 'exam_question' に変わります
+    return redirect(url_for('exam_question', q_index=0))
+
+# 試験問題を表示する新しいルート
+@app.route('/exam/question/<int:q_index>')
+@login_required
+def exam_question(q_index):
+    # セッションに試験情報がなければ、試験選択画面に戻す
+    if 'exam_state' not in session:
+        flash("試験セッションが開始されていません。", "warning")
+        return redirect(url_for('exam_info'))
+
+    question_ids = session['exam_state']['question_ids']
+    
+    # 無効なインデックスなら、最初か最後の問題に補正
+    if not 0 <= q_index < len(question_ids):
+        return redirect(url_for('exam_question', q_index=0))
+    
+    question_id = question_ids[q_index]
+    question = Question.query.get_or_404(question_id)
+    
+    options_list = json.loads(question.options) if isinstance(question.options, str) else question.options
+    correct_answers_list = json.loads(question.correct_answer) if isinstance(question.correct_answer, str) else question.correct_answer
+    is_multi_select_question = len(correct_answers_list) > 1
+
+    # 過去の解答があれば取得
+    previous_answers = session['exam_state']['answers'].get(str(question_id), [])
+
+    return render_template('exam_question.html',
+                           question=question,
+                           options=options_list,
+                           is_multi_select_question=is_multi_select_question,
+                           q_index=q_index,
+                           total_questions=len(question_ids),
+                           previous_answers=previous_answers,
+                           all_question_ids=question_ids,
+                           answered_map=session['exam_state']['answers'].keys())
+
+
+# 試験中の解答をセッションに保存する新しいルート
+@app.route('/exam/answer', methods=['POST'])
+@login_required
+def exam_answer():
+    if 'exam_state' not in session:
+        return redirect(url_for('exam_info'))
         
-    first_question_id = exam_questions_ids[0]
-    return redirect(url_for('show_question', question_id=first_question_id))
+    q_index = request.form.get('q_index', type=int)
+    question_id = request.form.get('question_id', type=str)
+    user_answers = request.form.getlist('selected_option')
+
+    # 解答をセッションに保存
+    session['exam_state']['answers'][question_id] = user_answers
+    session.modified = True  # ネストした辞書を変更した場合は必須
+
+    # 次の問題へリダイレクト（最後の問題ならサマリーページへ）
+    next_index = q_index + 1
+    if next_index < len(session['exam_state']['question_ids']):
+        return redirect(url_for('exam_question', q_index=next_index))
+    else:
+        # ここでは最後の問題のページに戻るようにしておく（後でサマリーページなどに変更も可能）
+        return redirect(url_for('exam_question', q_index=q_index))
 
 @app.route('/question/<int:question_id>')
 @login_required
@@ -670,32 +746,78 @@ def next_question():
         else:
             return redirect(url_for('quiz_completion', correct_count=correct_count_for_completion, total_answered=total_answered))
 
+# 「試験を終了して採点する」ボタンが押されたときの処理
 @app.route('/submit_exam')
-@login_required # ★★★ 修正箇所 ★★★
+@login_required
 def submit_exam():
-    if not session.get(EXAM_MODE_KEY):
-        return redirect(url_for('quiz_range_select'))
+    if 'exam_state' not in session:
+        return redirect(url_for('exam_info'))
 
-    correct_count = session.get('correct_count', 0)
-    total_answered = session.get('total_questions_answered', 0)
-    total_questions_in_exam = len(session.get('quiz_order_ids', []))
+    score = 0
+    results_detail = []
+    
+    question_ids = session['exam_state']['question_ids']
+    user_answers_map = session['exam_state']['answers']
 
-    session.pop(EXAM_MODE_KEY, None)
-    session.pop('exam_end_time', None)
-    session.pop('correct_count', None)
-    session.pop('total_questions_answered', None)
-    session.pop('answered_question_ids', None)
-    session.pop('current_range_key', None)
-    session.pop('quiz_order_ids', None)
-    session.pop('current_question_index_in_order', None)
+    for q_id in question_ids:
+        question = Question.query.get(q_id)
+        if not question: continue
 
-    return redirect(url_for(
-        'quiz_completion',
-        correct_count=correct_count,
-        total_answered=total_questions_in_exam,
-        answered_count=total_answered,
-        exam_completed=True
-    ))
+        user_submitted_str_id = str(q_id)
+        user_submitted_answers = user_answers_map.get(user_submitted_str_id, [])
+        
+        correct_answers = json.loads(question.correct_answer) if isinstance(question.correct_answer, str) else question.correct_answer
+        
+        is_correct = (set(user_submitted_answers) == set(correct_answers))
+        if is_correct:
+            score += 1
+            
+        results_detail.append({
+            'question_id': q_id,
+            'question_text': question.question_text,
+            'image_filename': question.image_filename,
+            'user_answer': user_submitted_answers,
+            'correct_answer': correct_answers,
+            'explanation': question.explanation,
+            'is_correct': is_correct
+        })
+    
+    # もし本番モードだったら、結果をDBに保存する
+    if session.get('exam_state', {}).get('proctored'):
+        new_exam_result = ExamResult(
+            user_id=current_user.id,
+            score=score,
+            total_questions=len(question_ids),
+            results_detail=results_detail
+        )
+        db.session.add(new_exam_result)
+        db.session.commit()
+        flash("本番モードの試験結果が保存されました。", "success")
+
+    # セッションに最終結果を保存する際、キーを'details'に統一する
+    session['exam_results'] = {
+        'score': score,
+        'total': len(question_ids),
+        'details': results_detail
+    }
+
+    session.pop('exam_state', None)
+
+    return redirect(url_for('exam_results'))
+
+# 試験結果を表示する新しいルート
+@app.route('/exam/results')
+@login_required
+def exam_results():
+    results = session.get('exam_results')
+    if not results:
+        flash("表示できる試験結果がありません。", "warning")
+        return redirect(url_for('exam_info'))
+    
+    # 結果ページは一度表示したらセッションから消す
+    session.pop('exam_results', None)
+
+    return render_template('exam_results.html', results=results)
 
 
 @app.route('/quiz_completion')
@@ -959,3 +1081,34 @@ def reset_password(token):
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+@app.route('/exam/proctored/start', methods=['GET', 'POST'])
+@login_required
+def start_proctored_exam_request():
+    form = PasswordConfirmForm()
+    if form.validate_on_submit():
+        # 入力されたパスワードが正しいかチェック
+        if form.password.data == app.config.get('PROCTORED_EXAM_PASSWORD'):
+            # パスワードが正しければ、start_examとほぼ同じ処理を実行
+            all_q_ids = [q.id for q in Question.query.with_entities(Question.id).all()]
+            if len(all_q_ids) < 20:
+                exam_questions_ids = all_q_ids
+            else:
+                exam_questions_ids = random.sample(all_q_ids, 20)
+
+            if not exam_questions_ids:
+                flash("試験を開始できる問題がありません。", "danger")
+                return redirect(url_for('exam_info'))
+
+            # exam_stateを初期化し、「本番モード」である印をつける
+            session['exam_state'] = {
+                'question_ids': exam_questions_ids,
+                'answers': {},
+                'start_time': datetime.datetime.now(pytz.utc).isoformat(),
+                'proctored': True  # ★本番モードであるフラグ
+            }
+            return redirect(url_for('exam_question', q_index=0))
+        else:
+            flash("パスワードが違います。", "danger")
+            
+    return render_template('exam_proctored_start.html', form=form)

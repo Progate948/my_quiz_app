@@ -89,3 +89,7 @@ class PasswordResetForm(FlaskForm):
     password2 = PasswordField(
         '新しいパスワード（確認）', validators=[DataRequired(), EqualTo('password')])
     submit = SubmitField('パスワードを再設定する')
+
+class PasswordConfirmForm(FlaskForm):
+    password = PasswordField('パスワード', validators=[DataRequired()])
+    submit = SubmitField('試験を開始')

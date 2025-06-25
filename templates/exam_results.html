@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}試験結果{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="text-center my-4">
+        <h1>試験結果</h1>
+        <p class="lead">お疲れ様でした！</p>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body text-center">
+            <h2 class="card-title">あなたのスコア</h2>
+            <p class="display-3 fw-bold">{{ results.score }} / {{ results.total }}</p>
+            {% if results.total > 0 %}
+                <p class="h3">正解率: {{ "%.1f"|format((results.score / results.total) * 100) }}%</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <h2 class="mt-5 mb-3">解答の詳細</h2>
+
+    {% for detail in results.details %}
+        <div class="card mb-3 {% if detail.is_correct %}border-success{% else %}border-danger{% endif %}">
+            <div class="card-header {% if detail.is_correct %}bg-success-subtle{% else %}bg-danger-subtle{% endif %}">
+                <strong>問題 {{ loop.index }} (ID: {{ detail.question_id }}) - {% if detail.is_correct %}正解{% else %}不正解{% endif %}</strong>
+            </div>
+            <div class="card-body">
+                <p class="question-text">{{ detail.question_text }}</p>
+                {% if detail.image_filename %}
+                    <div class="question-image-container my-3">
+                        <img src="{{ url_for('static', filename=detail.image_filename.replace('\\', '/')) }}" alt="問題画像" class="question-image">
+                    </div>
+                {% endif %}
+                <p>あなたの解答: <strong class="{% if not detail.is_correct %}text-danger{% endif %}">{{ detail.user_answer|join(' & ') if detail.user_answer else '無解答' }}</strong></p>
+                <p>正解: <strong class="text-success">{{ detail.correct_answer|join(' & ') }}</strong></p>
+                <div class="explanation mt-3 p-3 bg-light border rounded">
+                    <h6 class="fw-bold">解説</h6>
+                    <p class="mb-0">{{ detail.explanation }}</p>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+    <div class="text-center my-5">
+        <a href="{{ url_for('quiz_range_select') }}" class="btn btn-primary btn-lg">トップページに戻る</a>
+    </div>
+</div>
+{% endblock %}
