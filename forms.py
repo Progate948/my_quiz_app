@@ -15,6 +15,7 @@ class RegistrationForm(FlaskForm):
     password = PasswordField('パスワード', validators=[DataRequired()])
     password2 = PasswordField(
         'パスワード（確認）', validators=[DataRequired(), EqualTo('password')])
+    show_in_ranking = BooleanField('ランキングに表示する', default=True)
     submit = SubmitField('登録')
 
     def validate_username(self, username):
@@ -66,6 +67,7 @@ class EditProfileForm(FlaskForm):
                              description='変更する場合のみ入力してください。')
     password2 = PasswordField('新しいパスワード（確認）', 
                               validators=[EqualTo('password', message='パスワードが一致しません。')])
+    show_in_ranking = BooleanField('ランキングに表示する')
     submit = SubmitField('更新する')
 
     def validate_username(self, username):

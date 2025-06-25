@@ -239,7 +239,7 @@ def register():
     from forms import RegistrationForm
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(username=form.username.data, email=form.email.data)
+        user = User(username=form.username.data, email=form.email.data,show_in_ranking=form.show_in_ranking.data)
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
@@ -371,6 +371,7 @@ def edit_profile():
     if form.validate_on_submit():
         current_user.username = form.username.data
         current_user.email = form.email.data
+        current_user.show_in_ranking = form.show_in_ranking.data
         if form.password.data:
             current_user.set_password(form.password.data)
         db.session.commit()
@@ -379,6 +380,7 @@ def edit_profile():
     elif request.method == 'GET':
         form.username.data = current_user.username
         form.email.data = current_user.email
+        form.show_in_ranking.data = current_user.show_in_ranking
     return render_template('edit_profile.html', title='プロフィール編集', form=form)
 
 
@@ -418,6 +420,7 @@ def ranking():
         UserAnswer, User.id == UserAnswer.user_id
     ).filter(
         User.is_admin == False,
+        User.show_in_ranking == True,
         UserAnswer.timestamp >= start_date
     ).group_by(
         User.id
