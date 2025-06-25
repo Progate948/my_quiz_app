@@ -75,3 +75,19 @@ class UserCheck(db.Model):
 
     def __repr__(self):
         return f'<UserCheck {self.id} (User:{self.user_id}, Q:{self.question_id}, Type:{self.check_type}, Checked:{self.is_checked})>'
+    
+class ExamResult(db.Model):
+    __tablename__ = 'exam_result'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    score = db.Column(db.Integer, nullable=False)
+    total_questions = db.Column(db.Integer, nullable=False)
+    submitted_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    # results_detail には、問題、ユーザーの解答、正解、解説などの詳細な結果をJSON形式で保存する
+    results_detail = db.Column(JSON, nullable=False)
+    
+    # Userモデルとの関連付け
+    user = db.relationship('User', backref=db.backref('exam_results', lazy='dynamic'))
+
+    def __repr__(self):
+        return f'<ExamResult {self.id} for User {self.user_id}>'
